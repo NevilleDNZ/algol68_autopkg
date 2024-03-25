@@ -547,8 +547,10 @@ jobs:
     - name: 'gpg import key'
       # if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
       id: gpg_step
+      env:
+        GPG_TTY: $(tty)
       run: |
-        echo "${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 }}" | gpg --import
+        echo "${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 }}" | gpg --batch --import
         # gpg --list-keys
 
     - name: autopkg_build
