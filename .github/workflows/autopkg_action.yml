@@ -556,6 +556,7 @@ jobs:
     - name: autopkg_build
       id: autopkg_build_step
       env:
+        GPG_TTY: $(tty)
         DEBSIGN_OPTS: "--no-tty --batch"
       run: |
 
