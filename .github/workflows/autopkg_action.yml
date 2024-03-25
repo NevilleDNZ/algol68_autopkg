@@ -611,16 +611,16 @@ jobs:
 #        asset_name: ${{ steps.autopkg_build_step.outputs.OMJ_BUILT_DBG_BASENAME }}
 #        asset_content_type: ${{ steps.autopkg_build_step.outputs.OMJ_MIME }}
 
-    - name: 'Upload Release Source Asset'
-      id: upload_src_step
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create_release_job.outputs.CRJ_upload_url }}
-        asset_path: ${{ steps.autopkg_build_step.outputs.OMJ_BUILT_SRC }}
-        asset_name: ${{ steps.autopkg_build_step.outputs.OMJ_BUILT_SRC_BASENAME }}
-        asset_content_type: ${{ steps.autopkg_build_step.outputs.OMJ_MIME }}
+#    - name: 'Upload Release Source Asset'
+#      id: upload_src_step
+#      uses: actions/upload-release-asset@v1
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      with:
+#        upload_url: ${{ needs.create_release_job.outputs.CRJ_upload_url }}
+#        asset_path: ${{ steps.autopkg_build_step.outputs.OMJ_BUILT_SRC }}
+#        asset_name: ${{ steps.autopkg_build_step.outputs.OMJ_BUILT_SRC_BASENAME }}
+#        asset_content_type: ${{ steps.autopkg_build_step.outputs.OMJ_MIME }}
 
       # asset_path: DOLLAR{{ github.workspace }}/qrtifact/your_package_name.rpm
       #  asset_name: your_package_name.rpm
