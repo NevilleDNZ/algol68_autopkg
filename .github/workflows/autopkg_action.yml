@@ -295,6 +295,10 @@ on:
           - force-preserve
           - force-remake
           - not-mangled
+
+permissions:
+  contents: write
+  
 env:
   NJOBS_WORKFLOW_LEVEL_VAR: 'This is a workflow-level variable'
 
