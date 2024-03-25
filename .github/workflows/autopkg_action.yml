@@ -555,6 +555,8 @@ jobs:
 
     - name: autopkg_build
       id: autopkg_build_step
+      env:
+        DEBSIGN_OPTS: "--no-tty --batch"
       run: |
 
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
