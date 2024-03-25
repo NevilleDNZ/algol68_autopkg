@@ -1,5 +1,47 @@
 name: Automated Algol68 RPM & DEB Package Releases using an extension to GNU Autotools
 
+# Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
+#   [ Where replace ABCDev68 with your GitHub login ]
+#   You need:
+#     (A) Create YOUR own GPG "ultimate/GPG-key-pair", to be used for creating new subkeys.
+#         - eg. gpg --full-generate-key
+#     (B) Create a GPG subkey for signing YOUR repo packages released
+#     (C) Add this new GPG signing key to your GitHub repo
+#     (D) Update this "autopkg_action.yml" with YOUR repo name
+#     (E) git commit+push the .yml with YOUR signing key NAME
+# Steps:
+#   (A) "gpg --full-generate-key" ... read documentation. Add your key name, eg "ABCDev68:algol68:repo"
+#     + [ Where you replace ABCDev68 with your GitHub login ]
+#   (B) With gpg, run:
+#     + $ gpg --edit-key "ABCDev68:algol68:repo"
+#     + gpg> addkey
+#     +    Your selection? 4 (4) RSA (sign only)
+#     +    RSA keys may be between 1024 and 4096 bits long.
+#     +    What keysize do you want? (3072) 
+#     +    Requested keysize is 3072 bits
+#     +    Please specify how long the key should be valid.
+#     +          <n>y = key expires in n years
+#     +    Key is valid for? (0) 6y
+#     +    Key expires at Sun 24 Mar 2030 11:00:44 AEST
+#     +    Is this correct? (y/N) y
+#     +    Really create? (y/N) y
+#     +  ...
+#     + returns: ssb  rsa3072/60CC45A2639D9555 => created: 2024-03-25  expires: 2030-03-24  usage: S 
+#     + $ gpg --export-secret-keys --armor 60CC45A2639D9555
+# -----BEGIN PGP PRIVATE KEY BLOCK-----
+#
+#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
+#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
+#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
+#
+#  -----END PGP PRIVATE KEY BLOCK-----
+#    
+#   (C) Add (Cut and Paste) this new "PGP PRIVATE KEY BLOCK" to your GitHub repo setup
+#      + On "https://github.com/ABCDev68-downstream/algol68_autopkg-downstream/settings/secrets/actions"
+#      + => [Actions] => [New repository secret]
+#      + ABCDEV68_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24
+#   (D) Update this "autopkg_action.yml" script with YOUR repo name [ABCDev68]/[NevilleDNZ] => YOUR name.
+#   (E) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
 on:
   push:
     branches: [ "trunk" ] # , "devel", "feature-ubuntu-support" ]
@@ -502,10 +544,11 @@ jobs:
           --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
           --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
 
-    - name: 'gpg --import NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_06_13'
+    - name: 'gpg import key'
+      if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
       id: gpg_step
       run: |
-        echo "${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_06_13 }}" | gpg --import
+        echo "${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 }}" | gpg --import
         # gpg --list-keys
 
     - name: autopkg_build
