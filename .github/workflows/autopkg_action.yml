@@ -8,7 +8,8 @@ name: Automated Algol68 RPM & DEB Package Releases using an extension to GNU Aut
 #     (B) Create a GPG subkey for signing YOUR repo packages released
 #     (C) Add this new GPG signing key to your GitHub repo
 #     (D) Update this "autopkg_action.yml" with YOUR repo name
-#     (E) git commit+push the .yml with YOUR signing key NAME
+#     (E) Grant "create-repository" for the .yml file.
+#     (G) git commit+push the .yml with YOUR signing key NAME
 # Steps:
 #   (A) "gpg --full-generate-key" ... read documentation. Add your key name, eg "ABCDev68:algol68:repo"
 #     + [ Where you replace ABCDev68 with your GitHub login ]
@@ -41,7 +42,8 @@ name: Automated Algol68 RPM & DEB Package Releases using an extension to GNU Aut
 #      + => [Actions] => [New repository secret]
 #      + ABCDEV68_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24
 #   (D) Update this "autopkg_action.yml" script with YOUR repo name [ABCDev68]/[NevilleDNZ] => YOUR name.
-#   (E) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
+#   (E) Grant "create-repository" for the .yml file. - I've not figured this out yet.
+#   (G) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
 on:
   push:
     branches: [ "trunk" ] # , "devel", "feature-ubuntu-support" ]
@@ -296,8 +298,8 @@ on:
           - force-remake
           - not-mangled
 
-permissions:
-  contents: write
+# permissions: # ensure that the workflow has the necessary permissions to create releases
+#  contents: write
   
 env:
   NJOBS_WORKFLOW_LEVEL_VAR: 'This is a workflow-level variable'
