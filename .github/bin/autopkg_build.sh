@@ -54,8 +54,8 @@ if [ "$RUNNER_OS" == "Linux" ]; then
 
     # https://askubuntu.com/questions/226495/how-to-solve-dpkg-source-source-problem-when-building-a-package
     # requires fmt: algol68g_3.2.0.orig.tar.{bz2,gz,lzma,xz}
-        echo ECHO dpkg-buildpackage --root-command=fakeroot --build=binary --sign-key=$CRJ_GPG_NAME # || exit $?
-        dpkg-buildpackage --root-command=fakeroot --build=binary --sign-key=$CRJ_GPG_NAME # || exit $?
+        echo ECHO dpkg-buildpackage --root-command=fakeroot --build=binary / --sign-key=$CRJ_GPG_NAME # || exit $?
+        dpkg-buildpackage --root-command=fakeroot --build=binary # --sign-key=$CRJ_GPG_NAME # || exit $?
         ls -ltr ..
         #tar -czf ../"$CRJ_PRJ"_"$RBLD".src.tar.gz ../"$CRJ_PRJ"_"$RBLD".dsc ../"$CRJ_PRJ"_"$RBLD"_"$OMJ_ARCH".{buildinfo,changes} ../"$CRJ_PRJ"_$TAR.orig.tar.gz || exit $?
 
