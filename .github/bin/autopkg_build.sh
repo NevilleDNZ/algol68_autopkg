@@ -49,15 +49,15 @@ if [ "$RUNNER_OS" == "Linux" ]; then
 
     # https://stackoverflow.com/questions/12380226/how-do-i-suppress-the-editor-in-dpkg-source-commit-calls
         EDITOR=/bin/true dpkg-source -q --commit . "patch$TAR"
-        echo ECHO dpkg-buildpackage --root-command=fakeroot --build=source / --sign-key=$CRJ_GPG_NAME #|| exit $?
-        dpkg-buildpackage --root-command=fakeroot --build=source # --sign-key=$CRJ_GPG_NAME #|| exit $?
+        #echo ECHO dpkg-buildpackage --root-command=fakeroot --build=source --sign-key=$CRJ_GPG_NAME #|| exit $?
+        #dpkg-buildpackage --root-command=fakeroot --build=source --sign-key=$CRJ_GPG_NAME #|| exit $?
 
     # https://askubuntu.com/questions/226495/how-to-solve-dpkg-source-source-problem-when-building-a-package
     # requires fmt: algol68g_3.2.0.orig.tar.{bz2,gz,lzma,xz}
-        echo ECHO dpkg-buildpackage --root-command=fakeroot --build=binary / --sign-key=$CRJ_GPG_NAME # || exit $?
-        dpkg-buildpackage --root-command=fakeroot --build=binary # --sign-key=$CRJ_GPG_NAME # || exit $?
+        echo ECHO dpkg-buildpackage --root-command=fakeroot --build=binary --sign-key=$CRJ_GPG_NAME # || exit $?
+        dpkg-buildpackage --root-command=fakeroot --build=binary --sign-key=$CRJ_GPG_NAME # || exit $?
         ls -ltr ..
-        tar -czf ../"$CRJ_PRJ"_"$RBLD".src.tar.gz ../"$CRJ_PRJ"_"$RBLD".dsc ../"$CRJ_PRJ"_"$RBLD"_"$OMJ_ARCH".{buildinfo,changes} ../"$CRJ_PRJ"_$TAR.orig.tar.gz || exit $?
+        #tar -czf ../"$CRJ_PRJ"_"$RBLD".src.tar.gz ../"$CRJ_PRJ"_"$RBLD".dsc ../"$CRJ_PRJ"_"$RBLD"_"$OMJ_ARCH".{buildinfo,changes} ../"$CRJ_PRJ"_$TAR.orig.tar.gz || exit $?
 
         OMJ_BUILT_SRC="$PWD/../$CRJ_PRJ"_"$RBLD".src.tar.gz
         OMJ_BUILT_BIN="$PWD/../$CRJ_PRJ"_"$RBLD"_"$OMJ_ARCH".deb
