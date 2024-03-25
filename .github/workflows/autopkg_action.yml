@@ -321,6 +321,7 @@ jobs:
       CRJ_INCLUDE_LIBS:       ${{ steps.name_release_step.outputs.CRJ_INCLUDE_LIBS }}
       CRJ_AUTOTOOL_CONFIGURE: ${{ steps.name_release_step.outputs.CRJ_AUTOTOOL_CONFIGURE }}
       CRJ_PRJ:                ${{ steps.name_release_step.outputs.CRJ_PRJ }}
+      CRJ_GPG_NAME:           ${{ steps.name_release_step.outputs.CRJ_GPG_NAME }}
 
     steps:
 
@@ -360,6 +361,7 @@ jobs:
           echo CRJ_PRJ_UPSTREAM="${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" >> $GITHUB_OUTPUT
           echo CRJ_INCLUDE_LIBS="${{ github.event.inputs.WFDP_INCLUDE_LIBS   || 'full' }}" >> $GITHUB_OUTPUT
           echo CRJ_AUTOTOOL_CONFIGURE="${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}" >> $GITHUB_OUTPUT
+          echo CRJ_GPG_NAME="NevilleDNZ:algol68:repo" >> $GITHUB_OUTPUT
           echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
 
       - name: 'Create Release'
@@ -571,6 +573,7 @@ jobs:
         CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
         CRJ_AUTOTOOL_CONFIGURE="${{ needs.create_release_job.outputs.CRJ_AUTOTOOL_CONFIGURE }}"
         CRJ_PRJ="${{ needs.create_release_job.outputs.CRJ_PRJ }}"
+        CRJ_GPG_NAME="${{ needs.create_release_job.outputs.CRJ_GPG_NAME }}"
 
         OMJ_BUILDER=${{ steps.name_build_step.outputs.OMJ_BUILDER }}
         OMJ_OS_RELEASE=${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}

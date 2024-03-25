@@ -34,7 +34,7 @@ if [ "$RUNNER_OS" == "Linux" ]; then
         # OMJ_BUILT_DBG="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-full-debuginfo-"$CRJ_RELEASE_NAME"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
 
         # https://stackoverflow.com/questions/11903688/error-trying-to-sign-rpm
-        rpm --define "_gpg_name NevilleD.algol68@sgr-a.net" --addsign $OMJ_BUILT_SRC $OMJ_BUILT_BIN # $OMJ_BUILT_DBG
+        rpm --define "_gpg_name $CRJ_GPG_NAME" --addsign $OMJ_BUILT_SRC $OMJ_BUILT_BIN # $OMJ_BUILT_DBG
 
     elif [ "$OMJ_BUILDER" == dpkg-buildpackage ]; then
 
@@ -49,12 +49,14 @@ if [ "$RUNNER_OS" == "Linux" ]; then
 
     # https://stackoverflow.com/questions/12380226/how-do-i-suppress-the-editor-in-dpkg-source-commit-calls
         EDITOR=/bin/true dpkg-source -q --commit . "patch$TAR"
-        dpkg-buildpackage --root-command=fakeroot --build=source --sign-key=NevilleD.algol68@sgr-a.net || exit $?
+        echo dpkg-buildpackage --root-command=fakeroot --build=source --sign-key=$CRJ_GPG_NAME #|| exit $?
+        dpkg-buildpackage --root-command=fakeroot --build=source --sign-key=$CRJ_GPG_NAME #|| exit $?
 
     # https://askubuntu.com/questions/226495/how-to-solve-dpkg-source-source-problem-when-building-a-package
     # requires fmt: algol68g_3.2.0.orig.tar.{bz2,gz,lzma,xz}
-        dpkg-buildpackage --root-command=fakeroot --build=binary --sign-key=NevilleD.algol68@sgr-a.net || exit $?
-
+        echo dpkg-buildpackage --root-command=fakeroot --build=binary --sign-key=$CRJ_GPG_NAME # || exit $?
+        dpkg-buildpackage --root-command=fakeroot --build=binary --sign-key=$CRJ_GPG_NAME # || exit $?
+        ls -ltr ..
         tar -czf ../"$CRJ_PRJ"_"$RBLD".src.tar.gz ../"$CRJ_PRJ"_"$RBLD".dsc ../"$CRJ_PRJ"_"$RBLD"_"$OMJ_ARCH".{buildinfo,changes} ../"$CRJ_PRJ"_$TAR.orig.tar.gz || exit $?
 
         OMJ_BUILT_SRC="$PWD/../$CRJ_PRJ"_"$RBLD".src.tar.gz
