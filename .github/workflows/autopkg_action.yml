@@ -545,7 +545,7 @@ jobs:
           --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
 
     - name: 'gpg import key'
-      if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
+      # if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
       id: gpg_step
       run: |
         echo "${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 }}" | gpg --import
