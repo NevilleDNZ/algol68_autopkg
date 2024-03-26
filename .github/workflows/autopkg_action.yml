@@ -394,7 +394,7 @@ jobs:
           prerelease: false
           body: |
             ## What's Changed...
-            * Under costruction.
+            * Under construction.
 
   os_matrix_job: # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
     # a.k.a. OMJ
