@@ -34,7 +34,7 @@ if [ "$RUNNER_OS" == "Linux" ]; then
         # OMJ_BUILT_DBG="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-full-debuginfo-"$CRJ_RELEASE_NAME"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
 
         # https://stackoverflow.com/questions/11903688/error-trying-to-sign-rpm
-        rpm --define "_gpg_name $CRJ_GPG_NAME" --addsign $OMJ_BUILT_SRC $OMJ_BUILT_BIN # $OMJ_BUILT_DBG
+        # rpm --define "_gpg_name $CRJ_GPG_NAME" --addsign $OMJ_BUILT_SRC $OMJ_BUILT_BIN # $OMJ_BUILT_DBG
 
     elif [ "$OMJ_BUILDER" == dpkg-buildpackage ]; then
 
