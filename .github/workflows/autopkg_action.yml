@@ -38,11 +38,16 @@ name: Automated Algol68 RPM & DEB Package Releases using an extension to GNU Aut
 #  -----END PGP PRIVATE KEY BLOCK-----
 #    
 #   (C) Add (Cut and Paste) this new "PGP PRIVATE KEY BLOCK" to your GitHub repo setup
-#      + On "https://github.com/ABCDev68-downstream/algol68_autopkg-downstream/settings/secrets/actions"
+#      + https://github.com/ABCDev68/algol68_autopkg/settings/variables/actions/new
+#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/variables/actions/new
 #      + => [Actions] => [New repository secret]
 #      + ABCDEV68_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24
 #   (D) Update this "autopkg_action.yml" script with YOUR repo name [ABCDev68]/[NevilleDNZ] => YOUR name.
-#   (E) Grant "create-repository" for the .yml file. - I've not figured this out yet.
+#   (E) Grant "create-repository" for the .yml file.
+#      + https://github.com/ABCDev68/algol68_autopkg/settings/actions 
+#      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
+#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/actions 
+#      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
 #   (G) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
 on:
   push:
@@ -403,13 +408,13 @@ jobs:
       matrix:
         matrix_os_rel_mach:
 #          - ${{ github.event.inputs.WFDP_OS_REL_MACH || 'rhel9.3-x86_64' }}
-#          - rhel9.3-x86_64
-#          - rocky9.3-aarch64
-#          - debian11-aarch64
-#          - raspbian12-armv7l
+          - rhel9.3-x86_64
+          - rocky9.3-aarch64
+          - debian11-aarch64
+          - raspbian12-armv7l
           - ubuntu-latest
           - ubuntu-20.04
-#          - fedora38-x86_64
+          - fedora38-x86_64
           # - opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
 #        matrix_os_vm:
 #          - DOLLAR{{ github.event.inputs.WFDP_OS_VM || 'baremetal' }}
