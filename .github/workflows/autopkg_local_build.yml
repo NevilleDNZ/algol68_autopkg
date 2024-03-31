@@ -42,9 +42,10 @@ on:
             WFDP_PRJ_UPSTREAM:
                 description: 'Upstream project repo (source of pkg)'
                 required: true
-                default: 'algol68g-staging'
+                default: 'algol68g'
                 type: choice
                 options:
+                    - 'algol68g'
                     - 'algol68g-staging'
                     - 'algol68g-preview'
                     - 'algol68g-mirror'
