@@ -27,118 +27,118 @@ on:
 #            required: true
 #            default: 'develop'
             WFDP_BUILD:
-            description: 'Build number, normally YYmDD' # LATin TimeZone with months 0..9
-            required: true
-            default: 'YYmDD' # where 1st Jan=001, Feb=051, Mar=101,... Nov=901, Dec=951
+                description: 'Build number, normally YYmDD' # LATin TimeZone with months 0..9
+                required: true
+                default: 'YYmDD' # where 1st Jan=001, Feb=051, Mar=101,... Nov=901, Dec=951
             WFDP_USER_UPSTREAM:
-            description: 'Upstream user (source of pkg)'
-            required: true
-            default: 'NevilleDNZ'
-            type: choice
-            options:
-                - 'NevilleDNZ'
-                - 'NevilleDNZ-downstream'
-                - 'NevilleDNZ-fork'
+                description: 'Upstream user (source of pkg)'
+                required: true
+                default: 'NevilleDNZ'
+                type: choice
+                options:
+                    - 'NevilleDNZ'
+                    - 'NevilleDNZ-downstream'
+                    - 'NevilleDNZ-fork'
             WFDP_PRJ_UPSTREAM:
-            description: 'Upstream project repo (source of pkg)'
-            required: true
-            default: 'algol68g-staging'
-            type: choice
-            options:
-                - 'algol68g-staging'
-                - 'algol68g-preview'
-                - 'algol68g-mirror'
-                - '_algol68toc'
-                - '_algol68c'
+                description: 'Upstream project repo (source of pkg)'
+                required: true
+                default: 'algol68g-staging'
+                type: choice
+                options:
+                    - 'algol68g-staging'
+                    - 'algol68g-preview'
+                    - 'algol68g-mirror'
+                    - '_algol68toc'
+                    - '_algol68c'
             WFDP_INCLUDE_LIBS:
-            description: 'Std libraries to link in'
-            required: true
-            default: 'full' # All available libraries
-            type: choice
-            options:
-                - '_tiny' # Minimal libraries to support standard Algol68/r1
-                - '_native' # As available on building platform
-                - 'full'
+                description: 'Std libraries to link in'
+                required: true
+                default: 'full' # All available libraries
+                type: choice
+                options:
+                    - '_tiny' # Minimal libraries to support standard Algol68/r1
+                    - '_native' # As available on building platform
+                    - 'full'
             WFDP_RELEASE_NAME:
-            description: 'Release to build'
-            required: true
-            default: '3.5.1'
-            type: choice
-            options:
-                - '1.4.0'
-                - '1.8.0'
-                - '1.9.0'
-                - '1.9.1'
-                - '1.9.2'
-                - '1.10.0'
-                - '1.10.1'
-                - '1.10.2'
-                - '1.11.0'
-                - '1.11.1'
-                - '1.12.0'
-                - '1.14.0'
-                - '1.14.1'
-                - '1.15.0'
-                - '1.15.1'
-                - '1.16.0'
-                - '1.17.0'
-                - '1.18.0'
-                - '2.0.0'
-                - '2.0.1'
-                - '2.0.2'
-                - '2.0.3'
-                - '2.1.0'
-                - '2.1.1'
-                - '2.1.2'
-                - '2.2.0'
-                - '2.3.0'
-                - '2.3.1'
-                - '2.3.2'
-                - '2.3.3'
-                - '2.3.4'
-                - '2.3.5'
-                - '2.3.6'
-                - '2.3.8'
-                - '2.3.9'
-                - '2.4.0'
-                - '2.4.1'
-                - '2.5.0'
-                - '2.6.0'
-                - '2.7.0'
-                - '2.8.0'
-                - '2.8.1'
-                - '2.8.2'
-                - '2.8.3'
-                - '2.8.4'
-                - '3.0.0'
-                - '3.0.1'
-                - '3.0.2'
-                - '3.0.3'
-                - '3.0.4'
-                - '3.0.5'
-                - '3.0.6'
-                - '3.0.7'
-                - '3.0.8'
-                - '3.1.0'
-                - '3.1.9'
-                - '3.2.0'
-                - '3.2.1'
-                - '3.3.0'
-                - '3.3.5'
-                - '3.3.16'
-                - '3.3.24'
-                - '3.4.1'
-                - '3.4.4'
-                - '3.4.5'
-                - '3.5.0'
-                - '3.5.1'
-                - '3.5.2'
-                - '3.5.3'
-                - '3.6.0'
-                - '3.7.0'
-                - '3.8.0'
-                - '3.9.0'
-                - '4.0.0'
+                description: 'Release to build'
+                required: true
+                default: '3.5.1'
+                type: choice
+                options:
+                    - '1.4.0'
+                    - '1.8.0'
+                    - '1.9.0'
+                    - '1.9.1'
+                    - '1.9.2'
+                    - '1.10.0'
+                    - '1.10.1'
+                    - '1.10.2'
+                    - '1.11.0'
+                    - '1.11.1'
+                    - '1.12.0'
+                    - '1.14.0'
+                    - '1.14.1'
+                    - '1.15.0'
+                    - '1.15.1'
+                    - '1.16.0'
+                    - '1.17.0'
+                    - '1.18.0'
+                    - '2.0.0'
+                    - '2.0.1'
+                    - '2.0.2'
+                    - '2.0.3'
+                    - '2.1.0'
+                    - '2.1.1'
+                    - '2.1.2'
+                    - '2.2.0'
+                    - '2.3.0'
+                    - '2.3.1'
+                    - '2.3.2'
+                    - '2.3.3'
+                    - '2.3.4'
+                    - '2.3.5'
+                    - '2.3.6'
+                    - '2.3.8'
+                    - '2.3.9'
+                    - '2.4.0'
+                    - '2.4.1'
+                    - '2.5.0'
+                    - '2.6.0'
+                    - '2.7.0'
+                    - '2.8.0'
+                    - '2.8.1'
+                    - '2.8.2'
+                    - '2.8.3'
+                    - '2.8.4'
+                    - '3.0.0'
+                    - '3.0.1'
+                    - '3.0.2'
+                    - '3.0.3'
+                    - '3.0.4'
+                    - '3.0.5'
+                    - '3.0.6'
+                    - '3.0.7'
+                    - '3.0.8'
+                    - '3.1.0'
+                    - '3.1.9'
+                    - '3.2.0'
+                    - '3.2.1'
+                    - '3.3.0'
+                    - '3.3.5'
+                    - '3.3.16'
+                    - '3.3.24'
+                    - '3.4.1'
+                    - '3.4.4'
+                    - '3.4.5'
+                    - '3.5.0'
+                    - '3.5.1'
+                    - '3.5.2'
+                    - '3.5.3'
+                    - '3.6.0'
+                    - '3.7.0'
+                    - '3.8.0'
+                    - '3.9.0'
+                    - '4.0.0'
 
 #          WFDP_OS_REL_MACH:
 #            description: 'target OS platform'
@@ -252,14 +252,14 @@ on:
 #              - vmware
 #              - xen
             WFDP_AUTOTOOL_CONFIGURE:
-            description: 'AutoTool "configure" file - timestamp can be mangeled by git'
-            required: true
-            default: 'force-preserve'
-            type: choice
-            options:
-                - force-preserve
-                - force-remake
-                - not-mangled
+                description: 'AutoTool "configure" file - timestamp can be mangeled by git'
+                required: true
+                default: 'force-preserve'
+                type: choice
+                options:
+                    - force-preserve
+                    - force-remake
+                    - not-mangled
 #      jobs:
 #        call-reusable-workflow:
 #          uses: ./.github/workflows/autopkg_action.yml@trunk
@@ -268,13 +268,13 @@ on:
 #            b: ${{ github.event.inputs.b }}
 #            c: ${{ github.event.inputs.c }}
 
-  jobs:
+jobs:
     call-reusable-workflow:
-        uses: ./.github/workflows/autopkg_action.yml@trunk
+        uses: ./.github/workflows/autopkg_action.yml # @trunk
         with:
-            WFDP_BUILD: ${{ github.event.WFDP_BUILD }}
-            WFDP_USER_UPSTREAM: ${{ github.event.WFDP_USER_UPSTREAM }}
-            WFDP_PRJ_UPSTREAM: ${{ github.event.WFDP_PRJ_UPSTREAM }}
-            WFDP_INCLUDE_LIBS: ${{ github.event.WFDP_INCLUDE_LIBS }}
-            WFDP_RELEASE_NAME: ${{ github.event.WFDP_RELEASE_NAME }}
-            WFDP_AUTOTOOL_CONFIGURE: ${{ github.event.WFDP_AUTOTOOL_CONFIGURE }}
+            WFDP_BUILD: ${{ github.event.inputs.WFDP_BUILD }}
+            WFDP_USER_UPSTREAM: ${{ github.event.inputs.WFDP_USER_UPSTREAM }}
+            WFDP_PRJ_UPSTREAM: ${{ github.event.inputs.WFDP_PRJ_UPSTREAM }}
+            WFDP_INCLUDE_LIBS: ${{ github.event.inputs.WFDP_INCLUDE_LIBS }}
+            WFDP_RELEASE_NAME: ${{ github.event.inputs.WFDP_RELEASE_NAME }}
+            WFDP_AUTOTOOL_CONFIGURE: ${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE }}
