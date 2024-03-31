@@ -1,313 +1,38 @@
 name: Automated Algol68 RPM & DEB Package Releases using an extension to GNU Autotools
 
-# Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
-#   [ Where replace ABCDev68 with your GitHub login ]
-#   You need:
-#     (A) Create YOUR own GPG "ultimate/GPG-key-pair", to be used for creating new subkeys.
-#         - eg. gpg --full-generate-key
-#     (B) Create a GPG subkey for signing YOUR repo packages released
-#     (C) Add this new GPG signing key to your GitHub repo
-#     (D) Update this "autopkg_action.yml" with YOUR repo name
-#     (E) Grant "create-repository" for the .yml file.
-#     (G) git commit+push the .yml with YOUR signing key NAME
-# Steps:
-#   (A) "gpg --full-generate-key" ... read documentation. Add your key name, eg "ABCDev68:algol68:repo"
-#     + [ Where you replace ABCDev68 with your GitHub login ]
-#   (B) With gpg, run:
-#     + $ gpg --edit-key "ABCDev68:algol68:repo"
-#     + gpg> addkey
-#     +    Your selection? 4 (4) RSA (sign only)
-#     +    RSA keys may be between 1024 and 4096 bits long.
-#     +    What keysize do you want? (3072) 
-#     +    Requested keysize is 3072 bits
-#     +    Please specify how long the key should be valid.
-#     +          <n>y = key expires in n years
-#     +    Key is valid for? (0) 6y
-#     +    Key expires at Sun 24 Mar 2030 11:00:44 AEST
-#     +    Is this correct? (y/N) y
-#     +    Really create? (y/N) y
-#     +  ...
-#     + returns: ssb  rsa3072/60CC45A2639D9555 => created: 2024-03-25  expires: 2030-03-24  usage: S 
-#     + $ gpg --export-secret-keys --armor 60CC45A2639D9555
-# -----BEGIN PGP PRIVATE KEY BLOCK-----
-#
-#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
-#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
-#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
-#
-#  -----END PGP PRIVATE KEY BLOCK-----
-#    
-#   (C) Add (Cut and Paste) this new "PGP PRIVATE KEY BLOCK" to your GitHub repo setup
-#      + https://github.com/ABCDev68/algol68_autopkg/settings/variables/actions/new
-#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/variables/actions/new
-#      + => [Actions] => [New repository secret]
-#      + ABCDEV68_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24
-#   (D) Update this "autopkg_action.yml" script with YOUR repo name [ABCDev68]/[NevilleDNZ] => YOUR name.
-#   (E) Grant "create-repository" for the .yml file.
-#      + https://github.com/ABCDev68/algol68_autopkg/settings/actions 
-#      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
-#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/actions 
-#      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
-#   (G) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
-on:
-  push:
-    branches: [ "trunk" ] # , "devel", "feature-ubuntu-support" ]
-  pull_request:
-    branches: [ "trunk" ] # , "devel", "feature-ubuntu-support" ]
-# https://gist.github.com/Daniel-ltw/552b90800b07c22e4a83dfa68ada6318 ...
-  repository_dispatch:
-    types:
-      - star
-      - push
-# workflow_dispatch: # https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow
-# GitHub only exposes manual triggers for workflows that are
-# ...present in the repository's default branch.
-  workflow_dispatch:
-    inputs:
-#      environment:
-#        description: 'Environment to deploy to (e.g., feature, develop, staging, trunk etc.)'
-#        required: true
-#        default: 'develop'
-      WFDP_BUILD:
-        description: 'Build number, normally YYmDD' # LATin TimeZone with months 0..9
-        required: true
-        default: 'YYmDD' # where 1st Jan=001, Feb=051, Mar=101,... Nov=901, Dec=951
-      WFDP_USER_UPSTREAM:
-        description: 'Upstream user (source of pkg)'
-        required: true
-        default: 'NevilleDNZ'
-        type: choice
-        options:
-          - 'NevilleDNZ'
-          - 'NevilleDNZ-downstream'
-          - 'NevilleDNZ-fork'
-      WFDP_PRJ_UPSTREAM:
-        description: 'Upstream project repo (source of pkg)'
-        required: true
-        default: 'algol68g-staging'
-        type: choice
-        options:
-          - 'algol68g-staging'
-          - 'algol68g-preview'
-          - 'algol68g-mirror'
-          - '_algol68toc'
-          - '_algol68c'
-      WFDP_INCLUDE_LIBS:
-        description: 'Std libraries to link in'
-        required: true
-        default: 'full' # All available libraries
-        type: choice
-        options:
-          - '_tiny' # Minimal libraries to support standard Algol68/r1
-          - '_native' # As available on building platform
-          - 'full'
-      WFDP_RELEASE_NAME:
-        description: 'Release to build'
-        required: true
-        default: '3.5.1'
-        type: choice
-        options:
-          - '1.4.0'
-          - '1.8.0'
-          - '1.9.0'
-          - '1.9.1'
-          - '1.9.2'
-          - '1.10.0'
-          - '1.10.1'
-          - '1.10.2'
-          - '1.11.0'
-          - '1.11.1'
-          - '1.12.0'
-          - '1.14.0'
-          - '1.14.1'
-          - '1.15.0'
-          - '1.15.1'
-          - '1.16.0'
-          - '1.17.0'
-          - '1.18.0'
-          - '2.0.0'
-          - '2.0.1'
-          - '2.0.2'
-          - '2.0.3'
-          - '2.1.0'
-          - '2.1.1'
-          - '2.1.2'
-          - '2.2.0'
-          - '2.3.0'
-          - '2.3.1'
-          - '2.3.2'
-          - '2.3.3'
-          - '2.3.4'
-          - '2.3.5'
-          - '2.3.6'
-          - '2.3.8'
-          - '2.3.9'
-          - '2.4.0'
-          - '2.4.1'
-          - '2.5.0'
-          - '2.6.0'
-          - '2.7.0'
-          - '2.8.0'
-          - '2.8.1'
-          - '2.8.2'
-          - '2.8.3'
-          - '2.8.4'
-          - '3.0.0'
-          - '3.0.1'
-          - '3.0.2'
-          - '3.0.3'
-          - '3.0.4'
-          - '3.0.5'
-          - '3.0.6'
-          - '3.0.7'
-          - '3.0.8'
-          - '3.1.0'
-          - '3.1.9'
-          - '3.2.0'
-          - '3.2.1'
-          - '3.3.0'
-          - '3.3.5'
-          - '3.3.16'
-          - '3.3.24'
-          - '3.4.1'
-          - '3.4.4'
-          - '3.4.5'
-          - '3.5.0'
-          - '3.5.1'
-          - '3.5.2'
-          - '3.5.3'
-          - '3.6.0'
-          - '3.7.0'
-          - '3.8.0'
-          - '3.9.0'
-          - '4.0.0'
+# name: Reusable Workflow
+# 
+# on:
+#   workflow_call:
+#     inputs:
+#        a: { required: true, type: string}
+#        b: { required: true, type: string}
+#        c: { required: true, type: string}
+# 
+# jobs:
+#   reusable-job:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Use Input a
+#         run: echo "Input a is ${{ inputs.a }}"
+#       - name: Use Input b
+#         run: echo "Input b is ${{ inputs.b }}"
 
-#      WFDP_OS_REL_MACH:
-#        description: 'target OS platform'
-#        required: true
-#        default: rhel9.3-x86_64
-#        type: choice
-#        options:
-#          - rhel9.3-x86_64
-#          - rocky9.3-aarch64
-#          - debian11-aarch64
-#          - raspbian12-armv7l
-#          - ubuntu-latest
-#          - ubuntu-20.04
-#
-#      WFDP_OS:
-#        description: 'target OS platform'
-#        required: true
-#        default: 'ubuntu'
-#        type: choice
-#        options:
-#          - rhel
-#          - raspbian
-#          - debian
-#          - ubuntu
-#          - windows
-#          - macos
-#          - rocky
-#          - _aws-al2
-#          - _aws-al2023
-#          - _archlinux-pacman
-#          - _windows-cygwin
-#          - _windows-wsl
-#          - _windows-exe # Executable Installers (.exe)
-#          - _windows-msi # Windows Installer Packages (.msi)
-#          - _windows-appxbundle # Windows Store Apps (.appx, .appxbundle)
-#          - _windows-application # ClickOnce Deployment (.application)
-#          - _windows-chocolatey # Software Management Platforms (e.g., Chocolatey, Winget)
-#          - _windows-winget # Software Management Platforms (e.g., Chocolatey, Winget)
-#          - _macos-app # Application Bundles (.app)
-#          - _macos-pkg # Package Files (.pkg)
-#          - _macos-dmg # Disk Images (.dmg)
-#          - _macos-app-store # Mac App Store Applications
-#          - _freebsd-pkg # pkgsrc - 77%
-#          - _openbsd-pkg # pkgsrc - 33%
-#          - _netbsd-pkgsrc # pkgsrc (The NetBSD Package Collection) 16%
-#          - _solaris-pkg # SVR4 Packages (System V Release 4); depricated
-#          - _solaris-ips # IPS (Image Packaging System); Package Archives (.p5p)
-#          - _hpux-depot # Software Distributor (SD) Packages
-#          - _aix-lpp # LPP (Licensed Program Products) - fileset
-#          - _aix-rpm # AIX has adopted the RPM Package Manager format
-#          - _pan-os-docker
-#          - _pan-linux-flatpak
-#          - _pan-linux-appimage
-#          - _pan-linux-snap
-#          - _pan-linux-oci
-#          - _macos-linux-homebrew # Homebrew Formulae
-#          - _macos-linux-appimage
-#
-## https://github.com/actions/runner-images
-#      WFDP_OS_RELEASE:
-#        description: 'target OS release'
-#        required: true
-#        default: 'latest'
-#        type: choice
-#        options:
-#          - -latest
-#          - 7.9-x86_64 # RHEL
-#          - 8.9-x86_64
-#          - 9.3-x86_64
-#          - 12-armv7l # raspbian
-#          - 11-aarch64 # debian
-#          - 12-aarch64 # debian
-#          - 22-04-3-amd64-vbox
-#          - -20.04
-#          - -22.04
-#          - -24.00
-#          - -14-large
-#          - -14
-#          - -14-xlarge
-#          - -13
-#          - -13-large
-#          - -latest-large
-#          - -13-xlarge
-#          - -latest
-#          - -12
-#          - -12-large
-#          - -11
-#          - _windows-latest
-#          - _windows-2022
-#          - _windows-2019
-#
-#      WFDP_OS_ARCH: # as per: Runner.Listener.deps.json
-#        description: 'target OS arch'
-#        required: true
-#        default: 'x64'
-#        type: choice
-#        options:
-#          - arm
-#          - arm64
-#          - x64
-#          - _i686 # ? i386?
-#
-#      WFDP_OS_VM:
-#        description: 'target OS VM'
-#        required: true
-#        default: 'baremetal'
-#        type: choice
-#        options:
-#          - baremetal
-#          - vbox
-#          - vmware
-#          - xen
-      WFDP_AUTOTOOL_CONFIGURE:
-        description: 'AutoTool "configure" file - timestamp can be mangeled by git'
-        required: true
-        default: 'force-preserve'
-        type: choice
-        options:
-          - force-preserve
-          - force-remake
-          - not-mangled
+on: 
+  workflow_call:
+    inputs:
+      WFDP_BUILD: {required: true, type: string}
+      WFDP_USER_UPSTREAM: {required: true, type: string}
+      WFDP_PRJ_UPSTREAM: {required: true, type: string}
+      WFDP_INCLUDE_LIBS: {required: true, type: string}
+      WFDP_RELEASE_NAME: {required: true, type: string}
+      WFDP_AUTOTOOL_CONFIGURE: {required: true, type: string}
 
 # permissions: # ensure that the workflow has the necessary permissions to create releases
 #  contents: write
   
-env:
-  NJOBS_WORKFLOW_LEVEL_VAR: 'This is a workflow-level variable'
+#env:
+#  NJOBS_WORKFLOW_LEVEL_VAR: 'This is a workflow-level variable'
 
 jobs:
 
@@ -408,13 +133,13 @@ jobs:
       matrix:
         matrix_os_rel_mach:
 #          - ${{ github.event.inputs.WFDP_OS_REL_MACH || 'rhel9.3-x86_64' }}
-          - rhel9.3-x86_64
-          - rocky9.3-aarch64
-          - debian11-aarch64
-          - raspbian12-armv7l
-          - ubuntu-latest
+#           - rhel9.3-x86_64
+#           - rocky9.3-aarch64
+#           - debian11-aarch64
+#           - raspbian12-armv7l
+#           - ubuntu-latest
           - ubuntu-20.04
-          - fedora38-x86_64
+#           - fedora38-x86_64
           # - opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
 #        matrix_os_vm:
 #          - DOLLAR{{ github.event.inputs.WFDP_OS_VM || 'baremetal' }}
@@ -556,6 +281,56 @@ jobs:
           --Source https://jmvdveer.home.xs4all.nl/algol68g-${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}.tar.gz \
           --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
           --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
+
+# Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
+#   [ Where replace ABCDev68 with your GitHub login ]
+#   You need:
+#     (A) Create YOUR own GPG "ultimate/GPG-key-pair", to be used for creating new subkeys.
+#         - eg. gpg --full-generate-key
+#     (B) Create a GPG subkey for signing YOUR repo packages released
+#     (C) Add this new GPG signing key to your GitHub repo
+#     (D) Update this "autopkg_action.yml" with YOUR repo name
+#     (E) Grant "create-repository" for the .yml file.
+#     (G) git commit+push the .yml with YOUR signing key NAME
+# Steps:
+#   (A) "gpg --full-generate-key" ... read documentation. Add your key name, eg "ABCDev68:algol68:repo"
+#     + [ Where you replace ABCDev68 with your GitHub login ]
+#   (B) With gpg, run:
+#     + $ gpg --edit-key "ABCDev68:algol68:repo"
+#     + gpg> addkey
+#     +    Your selection? 4 (4) RSA (sign only)
+#     +    RSA keys may be between 1024 and 4096 bits long.
+#     +    What keysize do you want? (3072) 
+#     +    Requested keysize is 3072 bits
+#     +    Please specify how long the key should be valid.
+#     +          <n>y = key expires in n years
+#     +    Key is valid for? (0) 6y
+#     +    Key expires at Sun 24 Mar 2030 11:00:44 AEST
+#     +    Is this correct? (y/N) y
+#     +    Really create? (y/N) y
+#     +  ...
+#     + returns: ssb  rsa3072/60CC45A2639D9555 => created: 2024-03-25  expires: 2030-03-24  usage: S 
+#     + $ gpg --export-secret-keys --armor 60CC45A2639D9555
+# -----BEGIN PGP PRIVATE KEY BLOCK-----
+#
+#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
+#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
+#  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
+#
+#  -----END PGP PRIVATE KEY BLOCK-----
+#    
+#   (C) Add (Cut and Paste) this new "PGP PRIVATE KEY BLOCK" to your GitHub repo setup
+#      + https://github.com/ABCDev68/algol68_autopkg/settings/variables/actions/new
+#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/variables/actions/new
+#      + => [Actions] => [New repository secret]
+#      + ABCDEV68_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24
+#   (D) Update this "autopkg_action.yml" script with YOUR repo name [ABCDev68]/[NevilleDNZ] => YOUR name.
+#   (E) Grant "create-repository" for the .yml file.
+#      + https://github.com/ABCDev68/algol68_autopkg/settings/actions 
+#      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
+#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/actions 
+#      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
+#   (G) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
 
     - name: 'gpg import key'
       # if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
