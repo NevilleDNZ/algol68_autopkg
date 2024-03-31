@@ -133,13 +133,13 @@ jobs:
       matrix:
         matrix_os_rel_mach:
 #          - ${{ github.event.inputs.WFDP_OS_REL_MACH || 'rhel9.3-x86_64' }}
-#           - rhel9.3-x86_64
-#           - rocky9.3-aarch64
-#           - debian11-aarch64
-#           - raspbian12-armv7l
-#           - ubuntu-latest
+          - rhel9.3-x86_64
+          - rocky9.3-aarch64
+          - debian11-aarch64
+          - raspbian12-armv7l
+          - ubuntu-latest
           - ubuntu-20.04
-#           - fedora38-x86_64
+          - fedora38-x86_64
           # - opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
 #        matrix_os_vm:
 #          - DOLLAR{{ github.event.inputs.WFDP_OS_VM || 'baremetal' }}
