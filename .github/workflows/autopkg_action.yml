@@ -332,14 +332,14 @@ jobs:
 #      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
 #   (G) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
 
-    - name: 'gpg import key'
-      # if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
-      id: gpg_step
-      env:
-        GPG_TTY: $(tty)
-      run: |
-        echo "${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 }}" | gpg --batch --import
-        # gpg --list-keys
+#    - name: 'gpg import key'
+#      # if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
+#      id: gpg_step
+#      env:
+#        GPG_TTY: $(tty)
+#      run: |
+#        echo "${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 }}" | gpg --batch --import
+#        # gpg --list-keys
 
     - name: autopkg_build
       id: autopkg_build_step
