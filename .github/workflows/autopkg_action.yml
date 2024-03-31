@@ -353,10 +353,10 @@ jobs:
               (*)  m=`expr $m - 2`;; # ... Sep, Oct, Nov are now ... 7, 8, 9
           esac
           
-          # eval `date '+((d_pc=((%H "*" 60 + %M) "*" 60 + %S) / 864))'`
+          eval `date '+((d_pc=((%H "*" 60 + %M) "*" 60 + %S) / 864))'`
           
           Build_id=$y$m$d
-          #Build_id=$y$m$d$d_pc
+          Build_id=$y$m$d$d_pc
 
           CRJ_BUILD="${{ github.event.inputs.WFDP_BUILD         || 'YYmDD' }}"
           case "$CRJ_BUILD" in
