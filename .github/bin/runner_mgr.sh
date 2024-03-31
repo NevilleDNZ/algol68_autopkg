@@ -1,9 +1,8 @@
-
 #!/bin/bash
 
 def_SHR_REPO="NevilleDNZ-downstream/algol68_autopkg-downstream"
 
-SHR_AR_ROOT=action-runner
+SHR_AR_ROOT=actions-runner
 mkdir -p "$SHR_AR_ROOT"
 
 get_SHR_REPO(){
@@ -122,7 +121,7 @@ case "$1" in
         get_SHR_NAME "$@"
         if cd $SHR_AR_DIR; then
             if [ -f "TOKEN.txt" ]; then
-                SHR_TOKEN=`cat TOKEN.t
+                SHR_TOKEN=`cat TOKEN.txt`
             else
                 get_TOKEN
             fi
