@@ -1,4 +1,5 @@
-CRR_REPO="https://github.com/NevilleDNZ-downstream/algol68g-release-builder-orphan"
+CRR_REPO="https://github.com/NevilleDNZ-downstream/algol68_autopkg-downstream"
+CRR_REPO="https://github.com/NevilleDNZ/algol68_autopkg-downstream"
 CRR_URL_TOK_NEW="$CRR_REPO/settings/actions/runners/new"
 
 
