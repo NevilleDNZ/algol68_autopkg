@@ -33,7 +33,8 @@ on:
             WFDP_USER_UPSTREAM:
                 description: 'Upstream user (source of pkg)'
                 required: true
-                default: 'NevilleDNZ'
+#                default: 'NevilleDNZ'
+                default: 'NevilleDNZ-Downstream'
                 type: choice
                 options:
                     - 'NevilleDNZ'
@@ -42,9 +43,12 @@ on:
             WFDP_PRJ_UPSTREAM:
                 description: 'Upstream project repo (source of pkg)'
                 required: true
-                default: 'algol68g'
+#                default: 'algol68g'
+                default: 'gawk'
                 type: choice
                 options:
+                    - 'gawk'
+                    - 'gawk-downstream'
                     - 'algol68g'
                     - 'algol68g-staging'
                     - 'algol68g-preview'
