@@ -1,9 +1,8 @@
-
 #!/bin/bash
 
 def_SHR_REPO="NevilleDNZ-downstream/algol68_autopkg-downstream"
 
-SHR_AR_ROOT=action-runner
+SHR_AR_ROOT=actions-runner
 mkdir -p "$SHR_AR_ROOT"
 
 get_SHR_REPO(){
@@ -50,7 +49,7 @@ RAISE(){
     echo RAISE/$?: "$cmd" 1>&2
 }
 
-TRACK(){
+ASSERT(){
     cmd="$*"
     "$@" || RAISE
 }
@@ -61,7 +60,7 @@ TRACE(){
 }
 
 TRACE=TRACE
-TRACK=TRACK
+ASSERT=ASSERT
 WATCH=WATCH
 
 case "$(uname -m)" in
@@ -78,7 +77,7 @@ case "$1" in
     (download)
         ## Download
         # Create a folder
-            # $TRACK mkdir actions-runner && cd actions-runner
+            # $ASSERT mkdir actions-runner && cd actions-runner
         # Download the latest runner package
 # curl -o actions-runner-linux-x64-2.314.1.tar.gz -L https://github.com/actions/runner/releases/download/v2.314.1/actions-runner-linux-x64-2.314.1.tar.gz
 # curl -o actions-runner-linux-arm-2.314.1.tar.gz -L https://github.com/actions/runner/releases/download/v2.314.1/actions-runner-linux-arm-2.314.1.tar.gz
@@ -87,7 +86,7 @@ case "$1" in
         curl -o $AR_TAR -L https://github.com/actions/runner/releases/download/v$V/$AR_TAR
      
 # Optional: Validate the hash
-# $TRACK echo "6c726a118bbe02cd32e222f890e1e476567bf299353a96886ba75b423c1137b5  actions-runner-linux-x64-2.314.1.tar.gz" | shasum -a 256 -c
+# $ASSERT echo "6c726a118bbe02cd32e222f890e1e476567bf299353a96886ba75b423c1137b5  actions-runner-linux-x64-2.314.1.tar.gz" | shasum -a 256 -c
     ;;
     (configure)
         get_SHR_REPO "$@"
@@ -97,13 +96,13 @@ case "$1" in
             get_TOKEN
             echo "$SHR_TOKEN" > TOKEN.txt
         # Extract the installer
-            $TRACK tar xzf ../../../../$AR_TAR # actions-runner-linux-x64-2.314.1.tar.gz
+            $ASSERT tar xzf ../../../../$AR_TAR # actions-runner-linux-x64-2.314.1.tar.gz
         # Configure
         # Create the runner and start the configuration experience
 	# ToDo: ID_LIKE fedora, centos, rhel etc
         SHR_LABELS="$SHR_NAME,$( . /etc/os-release; echo $ID$VERSION_ID-`uname -m`,$ID$VERSION_ID,$ID,`uname -m`,$ID$VERSION_ID-$MACH,$MACH;)"
         echo HINT: name: $SHR_NAME - SHR_TOKEN: $SHR_TOKEN - SHR_LABELS: $SHR_LABELS
-            $TRACK ./config.sh --name "$SHR_NAME" --unattended --labels "$SHR_LABELS" --replace Y --url $SHR_REPO_URL --token $SHR_TOKEN
+            $ASSERT ./config.sh --name "$SHR_NAME" --unattended --labels "$SHR_LABELS" --replace Y --url $SHR_REPO_URL --token $SHR_TOKEN
         fi
     ;;
     (run)
@@ -111,7 +110,7 @@ case "$1" in
         get_SHR_NAME "$@"
         if cd $SHR_AR_DIR; then
             # Last step, run it!
-            $TRACK ./run.sh
+            $ASSERT ./run.sh
             # Using your self-hosted runner
             # Use this YAML in your workflow file for each job
             # runs-on: self-hosted
@@ -122,14 +121,14 @@ case "$1" in
         get_SHR_NAME "$@"
         if cd $SHR_AR_DIR; then
             if [ -f "TOKEN.txt" ]; then
-                SHR_TOKEN=`cat TOKEN.t
+                SHR_TOKEN=`cat TOKEN.txt`
             else
                 get_TOKEN
             fi
             echo SHR_TOKEN: $SHR_TOKEN
-            $TRACK ./config.sh remove --token $SHR_TOKEN
+            $ASSERT ./config.sh remove --token $SHR_TOKEN
             cd -
-            $TRACK mv $SHR_AR_DIR "$SHR_AR_DIR"_depr
+            $ASSERT mv $SHR_AR_DIR "$SHR_AR_DIR"_depr
         fi
     ;;
     (status)
