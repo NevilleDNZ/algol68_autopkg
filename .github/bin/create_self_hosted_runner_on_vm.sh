@@ -28,9 +28,9 @@ trace_argv="$(echo_Q "$@")"
 
 RAISE(){
     if [ $# != 0 ]; then
-        echo_Q RAISED: "$@"
+        echo_Q EXCEPTION: "$@"
     else
-        echo_Q RAISED: "$trace_argv"
+        echo_Q EXCEPTION: "$trace_argv"
     fi
     exit 1
 }
