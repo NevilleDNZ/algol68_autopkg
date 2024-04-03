@@ -44,7 +44,7 @@ on:
                 description: 'Upstream project repo (source of pkg)'
                 required: true
 #                default: 'algol68g'
-                default: 'gawk'
+                default: 'gawk-downstream'
                 type: choice
                 options:
                     - 'gawk'
@@ -67,9 +67,12 @@ on:
             WFDP_RELEASE_NAME:
                 description: 'Release to build'
                 required: true
-                default: '3.5.1'
+                default: '5.3.0'
                 type: choice
                 options:
+                    - '5.3.0'
+                    - '5.2.2'
+                    - '5.2.1'
                     - '1.4.0'
                     - '1.8.0'
                     - '1.9.0'
