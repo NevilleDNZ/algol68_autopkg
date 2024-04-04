@@ -756,7 +756,7 @@ LDFLAGS="{opt_d.LDFLAGS} $LDFLAGS" ; export LDFLAGS
 
 # see results in first section
 %{lc}!?with_quiet:echo "_arch=%_arch" "_isa=%_isa"{rc}
-%{lc}!?with_quiet:echo "_host=%_host" "_build=%_build" "_target=%_target" "_target_cpu=%_target_cpu" "_target_os=%_target_os"{rc}
+%{lc}!?with_quiet:echo "_host=%_host" "_build=%_build" "_target=%_target" "_host_cpu=%_host_cpu" "_target_os=%_target_os"{rc}
 %{lc}!?with_quiet:echo "_host_platform=%_host_platform" "_build_platform=%_build_platform" "_target_platform=%_target_platform"{rc}
 %{lc}!?with_quiet:echo "configure_cross_build_opts=%configure_cross_build_opts";{rc}
 %{lc}!?with_quiet:echo Note: CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" FFLAGS="$FFLAGS" FCFLAGS="$FCFLAGS" LDFLAGS="$LDFLAGS"{rc}
@@ -1214,10 +1214,10 @@ def gen_dep_summary_of_lib_l(chapter_d, PACKAGE="algol68g"):
             BuildRequiresPkg=uniq(bld_req_bin_pkg + bld_req_hdr_pkg + bld_req_lib_pkg)
             DPKG_BuildRequiresPkg=uniq(bld_req_bin_pkg + bld_req_hdr_pkg + bld_req_lib_pkg)
 
-            #BuildRequiresCap=find_cap(BuildRequiresPkg, target_cpu="?")
+            #BuildRequiresCap=find_cap(BuildRequiresPkg, host_cpu="?")
             bld_req_bin_cap=find_cap(bld_req_bin_pkg, req="bin")
             bld_req_hdr_cap=find_cap(bld_req_hdr_pkg, req="hdr")
-            bld_req_lib_cap=find_cap(bld_req_lib_pkg, req="lib", target_cpu="x86_64")
+            bld_req_lib_cap=find_cap(bld_req_lib_pkg, req="lib", host_cpu="x86_64")
             BuildRequiresCap=uniq(bld_req_bin_cap + bld_req_hdr_cap + bld_req_lib_cap)
             YUM_BuildRequiresCap=find_cap(BuildRequiresPkg, req="yum")
 
@@ -1232,7 +1232,7 @@ def gen_dep_summary_of_lib_l(chapter_d, PACKAGE="algol68g"):
             DPKG_RunRequiresPkg =uniq(run_req_bin_pkg + run_req_lib_pkg)
 
             run_req_bin_cap=find_cap(run_req_bin_pkg, req="bin")
-            run_req_lib_cap=find_cap(run_req_lib_pkg, req="lib", target_cpu="x86_64")
+            run_req_lib_cap=find_cap(run_req_lib_pkg, req="lib", host_cpu="x86_64")
 
             #StaticRunRequiresCap=run_req_bin_pkg
             #run_req_lib_cap=bld_req_lib_pkg
@@ -1383,9 +1383,9 @@ re_suffix=re.compile(r"-(headers|headers-x86|devel|lib)$")
 
 re_colon_arch_colon_etc=re.compile(r":[^:]:.*")
 
-def find_cap(pkg_l, req="yum", target_cpu="noarch"):
+def find_cap(pkg_l, req="yum", host_cpu="noarch"):
     # yum for any pkg is specific to the platform, so does not need to be canonised.
-    target_cpu="" if target_cpu=="noarch" else re_quote.sub("",output_variable_d["target_cpu"]).join("()")
+    host_cpu="" if host_cpu=="noarch" else re_quote.sub("",output_variable_d["host_cpu"]).join("()")
     out_l=PrintableList()
     for pkg in pkg_l:
         # Note: `rpm -q --provides qqq` finds any package provising qqq, EVEN if it is not installed!
@@ -1408,7 +1408,7 @@ def find_cap(pkg_l, req="yum", target_cpu="noarch"):
 
             cap = best_cap or guess_cap or first_cap or pkg
 
-            #if cap.startswith(pkg) and ( target_cpu in cap or "(" not in pkg ):
+            #if cap.startswith(pkg) and ( host_cpu in cap or "(" not in pkg ):
             #    cap=re_cap_ver.sub(de_cap_ver if req=="lib" else "" ,cap)
     # special case: glibc
             if req=="hdr":

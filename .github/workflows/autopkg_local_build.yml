@@ -34,7 +34,7 @@ on:
                 description: 'Upstream user (source of pkg)'
                 required: true
 #                default: 'NevilleDNZ'
-                default: 'NevilleDNZ-Downstream'
+                default: 'NevilleDNZ-downstream'
                 type: choice
                 options:
                     - 'NevilleDNZ'
