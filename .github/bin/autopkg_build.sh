@@ -46,7 +46,8 @@ if [ "$RUNNER_OS" == "Linux" ]; then
     # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1015077
     # algol68g_3.2.0-23960.orig.tar.{bz2,gz,lzma,xz}
         tar -czf ../"$CRJ_PRJ"_$TAR.orig.tar.gz * # IF debian || ubuntu... ignore .github
-
+        ls -l ../"$CRJ_PRJ"_$TAR.orig.tar.gz
+        
     #   ./configure # https://stackoverflow.com/questions/62039244/does-git-store-the-file-creation-time
         ./configure # needs to be before tarball - i.e. "error: aborting due to unexpected upstream changes"
 
