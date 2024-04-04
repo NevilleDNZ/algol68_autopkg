@@ -98,7 +98,8 @@ jobs:
           echo CRJ_INCLUDE_LIBS="${{ github.event.inputs.WFDP_INCLUDE_LIBS   || 'full' }}" >> $GITHUB_OUTPUT
           echo CRJ_AUTOTOOL_CONFIGURE="${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}" >> $GITHUB_OUTPUT
           echo CRJ_GPG_NAME="NevilleDNZ:algol68:repo" >> $GITHUB_OUTPUT
-          echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
+          #echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
+          echo CRJ_PRJ="${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" >> $GITHUB_OUTPUT # QQQ
 
       - name: 'Create Release'
         id: create_release_step
