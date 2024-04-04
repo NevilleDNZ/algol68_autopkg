@@ -300,13 +300,13 @@ README
 '''
     template_of_sect=template_of_sect_of_subfile[subdir+"changelog"]=OrderedDict()
     template_of_sect["head"]='''\
-{confdefs[TAR_NAME]} ({confdefs[PACKAGE_VERSION]}-{opt_d.Build}-{opt_d.os_release}) unstable; urgency=medium
+{confdefs[PACKAGE_TARNAME]} ({confdefs[PACKAGE_VERSION]}-{opt_d.Build}-{opt_d.os_release}) unstable; urgency=medium
 
   * New upstream version {confdefs[PACKAGE_VERSION]}-{opt_d.Build}-{opt_d.os_release}
 
  -- {opt_d.Packager}  {opt_d.DEBPackDate}
 
-{confdefs[TAR_NAME]} (2.1.2-1) unstable; urgency=low
+{confdefs[PACKAGE_TARNAME]} (2.1.2-1) unstable; urgency=low
 
   * Initial release. (Closes: #598192)
 
@@ -319,14 +319,14 @@ README
     """
     template_of_sect=template_of_sect_of_subfile[subdir+"control"]=OrderedDict()
     template_of_sect["head"]='''\
-Source: {confdefs[TAR_NAME]}
+Source: {confdefs[PACKAGE_TARNAME]}
 Section: {opt_d.Section}
 Priority: {opt_d.Priority}
 Maintainer: {confdefs[PACKAGE_BUGREPORT]}
 Standards-Version: 4.2.1
 Homepage: {opt_d.DOCUMENTATION_PAGE}
 
-Package: {confdefs[TAR_NAME]}
+Package: {confdefs[PACKAGE_TARNAME]}
 Architecture: any
 Depends: ${lc}shlibs:Depends{rc}, ${lc}misc:Depends{rc}
 '''
@@ -340,7 +340,7 @@ Depends: ${lc}shlibs:Depends{rc}, ${lc}misc:Depends{rc}
 #BuildRequires: {dep_of_this_subpkg[BuildRequiresCap]}
 
     template_of_sect["description"]='''\
-Description: Implementation of {confdefs[TAR_NAME]}
+Description: Implementation of {confdefs[PACKAGE_NAME]}
 {read[README/control]}
 
 '''
@@ -870,7 +870,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * {opt_d.RPMPackDate} {opt_d.Packager} - {confdefs[PACKAGE_VERSION]}-{opt_d.Build}
-- {confdefs[PACKAGE_STRING]}-{opt_d.Build}.spec - release with newist {confdefs[TAR_NAME]} version:
+- {confdefs[PACKAGE_STRING]}-{opt_d.Build}.spec - release with newest {confdefs[PACKAGE_NAME]} version:
 1. for: rhel_8, fedora_35, suse_15, awsl_2, debian11, raspberryos11, ubuntu etc.
 2. on: aarch64, s390x, i686, x86_64 etc.
 {read[NEWS/changelog]}
