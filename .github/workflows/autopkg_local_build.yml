@@ -263,11 +263,12 @@ on:
             WFDP_AUTOTOOL_CONFIGURE:
                 description: 'AutoTool "configure" file - timestamp can be mangeled by git'
                 required: true
-                default: 'force-preserve'
+                default: 'touch-now'
                 type: choice
                 options:
                     - force-preserve
                     - force-remake
+                    - touch-now
                     - not-mangled
                     
 #      jobs:

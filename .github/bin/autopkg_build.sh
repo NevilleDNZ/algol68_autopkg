@@ -8,6 +8,9 @@ if [ "$CRJ_AUTOTOOL_CONFIGURE" = "force-preserve" ]; then
 elif [ "$CRJ_AUTOTOOL_CONFIGURE" = "force-remake" ]; then
     TOUCH="configure a68g-config.in a68g-config.h.in Makefile.in aclocal.m4"
     for f in $TOUCH; do sleep 1; touch $f; done
+elif [ "$CRJ_AUTOTOOL_CONFIGURE" = "touch-now" ]; then
+    NOW=`date +"%Y%m%d%H%M"`
+    find . -type d -name .git -prune -o -type f -print0 | xargs -0 touch -t $NOW
 fi
 
 if [ "$RUNNER_OS" == "Linux" ]; then
