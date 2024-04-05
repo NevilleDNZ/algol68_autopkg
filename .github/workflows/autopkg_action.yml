@@ -254,7 +254,8 @@ jobs:
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
         CRJ_PRJ=${{ needs.create_release_job.outputs.CRJ_PRJ }}
         CRJ_RELEASE_NAME=${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}
-        
+        read PACKAGE_VERSION <<<$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")
+
         git fetch --tags
         git checkout tags/$CRJ_RELEASE_NAME
 
@@ -276,7 +277,7 @@ jobs:
 
         # Be very careful NOT to have white space after a backslash :-/
         echo python3 ../.github/bin/autopkg_spec.py \
-        --PACKAGE_VERSION "$CRJ_RELEASE_NAME" \
+        --PACKAGE_VERSION "$PACKAGE_VERSION" \
         --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
         --package_builder "$package_builder" \
@@ -285,7 +286,7 @@ jobs:
         --DOWNLOAD_PAGE $DOWNLOAD_PAGE \
         --DOCUMENTATION_PAGE $DOCUMENTATION_PAGE
         python3 ../.github/bin/autopkg_spec.py \
-          --PACKAGE_VERSION "$CRJ_RELEASE_NAME" \
+          --PACKAGE_VERSION "$PACKAGE_VERSION" \
           --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
           --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
           --package_builder "$package_builder" \
