@@ -14,8 +14,8 @@ elif [ "$CRJ_AUTOTOOL_CONFIGURE" = "touch-now" ]; then
 fi
 
 if [ "$RUNNER_OS" == "Linux" ]; then
-    TAR="$CRJ_RELEASE_NAME-$CRJ_BUILD" RBLD="$CRJ_RELEASE_NAME-$CRJ_BUILD-$OMJ_OS_RELEASE" RBARCH="$RBLD"_*
-    echo CRJ_RELEASE_NAME=$CRJ_RELEASE_NAME TAR=$TAR RBLD=$RBLD RBARCH=$RBARCH
+    TAR="$CRJ_PACKAGE_VERSION-$CRJ_BUILD" RBLD="$CRJ_PACKAGE_VERSION-$CRJ_BUILD-$OMJ_OS_RELEASE" RBARCH="$RBLD"_*
+    echo CRJ_PACKAGE_VERSION=$CRJ_PACKAGE_VERSION TAR=$TAR RBLD=$RBLD RBARCH=$RBARCH
 
 # RHEL
     OMJ_BUILDER=`../.github/bin/autopkg_mgr.sh echo builder`
@@ -26,15 +26,15 @@ if [ "$RUNNER_OS" == "Linux" ]; then
         TOPDIR="$PWD/../rpmbuild"
         mkdir -p "$TOPDIR/SOURCES"
 
-        tar -czf "$TOPDIR/SOURCES/$CRJ_PRJ-$CRJ_RELEASE_NAME.tar.gz" *
-        SPEC="$CRJ_PRJ-$CRJ_RELEASE_NAME-$CRJ_BUILD.spec"
+        tar -czf "$TOPDIR/SOURCES/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz" *
+        SPEC="$CRJ_PRJ-$CRJ_PACKAGE_VERSION-$CRJ_BUILD.spec"
 
         echo rpmbuild -ba --define "_topdir $TOPDIR" --with full --without tiny --build-in-place "$SPEC"
         rpmbuild -ba --define "_topdir $TOPDIR" --with full --without tiny --build-in-place "$SPEC"
 
-        OMJ_BUILT_SRC=$TOPDIR/SRPMS/$CRJ_PRJ-"$CRJ_RELEASE_NAME"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".src.rpm
-        OMJ_BUILT_BIN="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-full-"$CRJ_RELEASE_NAME"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
-        # OMJ_BUILT_DBG="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-full-debuginfo-"$CRJ_RELEASE_NAME"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
+        OMJ_BUILT_SRC=$TOPDIR/SRPMS/$CRJ_PRJ-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".src.rpm
+        OMJ_BUILT_BIN="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-full-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
+        # OMJ_BUILT_DBG="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-full-debuginfo-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
 
         # https://stackoverflow.com/questions/11903688/error-trying-to-sign-rpm
         # rpm --define "_gpg_name $CRJ_GPG_NAME" --addsign $OMJ_BUILT_SRC $OMJ_BUILT_BIN # $OMJ_BUILT_DBG
@@ -47,7 +47,7 @@ if [ "$RUNNER_OS" == "Linux" ]; then
     # algol68g_3.2.0-23960.orig.tar.{bz2,gz,lzma,xz}
         tar -czf ../"$CRJ_PRJ"_$TAR.orig.tar.gz * # IF debian || ubuntu... ignore .github
         ls -l ../"$CRJ_PRJ"_$TAR.orig.tar.gz
-        # ../gawk_5.3.0-beta-2420437.orig.tar.gz
+        # ../gawk_5.3.0_beta-2420437.orig.tar.gz
         # ../gawk_5.3.0-2420437.orig.tar.{bz2,gz,lzma,xz}
         
     #   ./configure # https://stackoverflow.com/questions/62039244/does-git-store-the-file-creation-time
@@ -71,7 +71,7 @@ if [ "$RUNNER_OS" == "Linux" ]; then
 
     else
          # needs to be before tarball - i.e. "error: aborting due to unexpected upstream changes"
-        if ./configure && $OMJ_BUILDER "$CRJ_PRJ"-$CRJ_RELEASE_NAME-$CRJ_BUILD; then
+        if ./configure && $OMJ_BUILDER "$CRJ_PRJ"-$CRJ_PACKAGE_VERSION-$CRJ_BUILD; then
             true # ToDo Under Construction
         else
             echo "$0: cannot find rpmbuild, nor dpkg-buildpackage... Huh?" || exit $?

@@ -74,7 +74,7 @@ jobs:
         run: |
           cd ${{ github.workspace }}
 
-          OUTPUT(){ case "$#" in (3) eval $1="'$3'"; esac; eval echo $1='"$'"$1"'"' >> $GITHUB_OUTPUT; }
+          output(){ case "$#" in (3) eval $1="'$3'"; esac; eval echo $1='"$'"$1"'"' >> $GITHUB_OUTPUT; }
 
           read Y m d H M S <<<$(date +"%Y %_m %_d %_H %_M %_S")
           case $m in
@@ -91,22 +91,22 @@ jobs:
             (YYmDD|"") CRJ_BUILD="$Build_id";;
           # (*)        CRJ_BUILD="$CRJ_BUILD";;
           esac
-          OUTPUT CRJ_BUILD
+          output CRJ_BUILD
           
           # ToDo: get most recent release tag on trunk!
-          OUTPUT CRJ_RELEASE_NAME := "${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" 
-          OUTPUT CRJ_PACKAGE_VERSION := "$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")"
+          output CRJ_RELEASE_NAME := "${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" 
+          output CRJ_PACKAGE_VERSION := "$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")"
 
-          OUTPUT CRJ_USER_UPSTREAM := "${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}"
-          OUTPUT CRJ_PRJ_UPSTREAM :=  "${{ github.event.inputs.WFDP_PRJ_UPSTREAM  || 'algol68g-staging' }}"
-          OUTPUT CRJ_INCLUDE_LIBS :=  "${{ github.event.inputs.WFDP_INCLUDE_LIBS  || 'full' }}"
-          OUTPUT CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}"
-          OUTPUT CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
-          OUTPUT CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
+          output CRJ_USER_UPSTREAM := "${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}"
+          output CRJ_PRJ_UPSTREAM :=  "${{ github.event.inputs.WFDP_PRJ_UPSTREAM  || 'algol68g-staging' }}"
+          output CRJ_INCLUDE_LIBS :=  "${{ github.event.inputs.WFDP_INCLUDE_LIBS  || 'full' }}"
+          output CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}"
+          output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
+          output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
           
-          OUTPUT CRJ_Source := https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
-          OUTPUT CRJ_DOWNLOAD_PAGE := https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
-          OUTPUT CRJ_DOCUMENTATION_PAGE := https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
+          output CRJ_Source := https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
+          output CRJ_DOWNLOAD_PAGE := https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
+          output CRJ_DOCUMENTATION_PAGE := https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
 
           echo $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
@@ -222,6 +222,7 @@ jobs:
       env:
         S_STEP_LEVEL_VAR: 'This is a step-level variable'
       run: |
+        output(){ case "$#" in (3) eval $1="'$3'"; esac; eval echo $1='"$'"$1"'"' >> $GITHUB_OUTPUT; }
 
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
 
@@ -239,7 +240,7 @@ jobs:
             ;;
         esac
 
-        echo OMJ_OS_RELEASE="$os_release" >> $GITHUB_OUTPUT
+        output OMJ_OS_RELEASE := "$os_release"
 
     - name: autopkg_depends
       id: autopkg_depends_step
@@ -377,13 +378,14 @@ jobs:
         GPG_TTY: $(tty)
         DEBSIGN_OPTS: "--no-tty --batch"
       run: |
+        output(){ case "$#" in (3) eval $1="'$3'"; esac; eval echo $1='"$'"$1"'"' >> $GITHUB_OUTPUT; }
 
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
 
         OMJ__ARCH=`../.github/bin/autopkg_mgr.sh echo _arch`
-        OMJ_ARCH=`../.github/bin/autopkg_mgr.sh echo arch`
-        OMJ_EXT=`../.github/bin/autopkg_mgr.sh echo ext`
-        OMJ_MIME=`../.github/bin/autopkg_mgr.sh echo mime`
+        output OMJ_ARCH := `../.github/bin/autopkg_mgr.sh echo arch`
+        output OMJ_EXT := `../.github/bin/autopkg_mgr.sh echo ext`
+        output OMJ_MIME := `../.github/bin/autopkg_mgr.sh echo mime`
 
         CRJ_BUILD="${{ needs.create_release_job.outputs.CRJ_BUILD }}"
         CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
@@ -399,13 +401,7 @@ jobs:
         . ${{ github.workspace }}/.github/bin/autopkg_build.sh
         ./a68g -V
 
-        echo OMJ_ARCH=$OMJ__ARCH >> $GITHUB_OUTPUT
-        echo OMJ_ARCH=$OMJ_ARCH >> $GITHUB_OUTPUT
-        echo OMJ_EXT=$OMJ_EXT >> $GITHUB_OUTPUT
-        echo OMJ_MIME=$OMJ_MIME >> $GITHUB_OUTPUT
-
-        CRJ_tag_name="$CRJ_RELEASE_NAME-$CRJ_BUILD-$OMJ_OS_RELEASE$OMJ__ARCH"
-        echo CRJ_tag_name="$CRJ_tag_name" >> $GITHUB_OUTPUT
+        output CRJ_tag_name := "$CRJ_RELEASE_NAME-$CRJ_BUILD-$OMJ_OS_RELEASE$OMJ__ARCH"
 
     - name: 'Upload Release Binary Asset'
       id: upload_bin_step
