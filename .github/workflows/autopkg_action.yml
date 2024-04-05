@@ -49,8 +49,9 @@ jobs:
     outputs:
       CRJ_upload_url:   ${{ steps.create_release_step.outputs.upload_url }}
 
-      CRJ_RELEASE_NAME: ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}
-      CRJ_BUILD:        ${{ steps.name_release_step.outputs.CRJ_BUILD }}
+      CRJ_RELEASE_NAME:    ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}
+      CRJ_PACKAGE_VERSION: ${{ steps.name_release_step.outputs.CRJ_PACKAGE_VERSION }}
+      CRJ_BUILD:           ${{ steps.name_release_step.outputs.CRJ_BUILD }}
 
       CRJ_USER_UPSTREAM:      ${{ steps.name_release_step.outputs.CRJ_USER_UPSTREAM }}
       CRJ_PRJ_UPSTREAM:       ${{ steps.name_release_step.outputs.CRJ_PRJ_UPSTREAM }}
@@ -85,6 +86,7 @@ jobs:
           
           # ToDo: get most recent release tag on trunk!
           echo CRJ_RELEASE_NAME="${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" >> $GITHUB_OUTPUT
+          read CRJ_PACKAGE_VERSION <<<$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME"
           echo CRJ_BUILD="$CRJ_BUILD" >> $GITHUB_OUTPUT
 
           echo CRJ_USER_UPSTREAM="${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}" >> $GITHUB_OUTPUT
@@ -94,6 +96,8 @@ jobs:
           echo CRJ_GPG_NAME="NevilleDNZ:algol68:repo" >> $GITHUB_OUTPUT
           #echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
           echo CRJ_PRJ="${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" >> $GITHUB_OUTPUT # QQQ
+          
+          echo CRJ_PACKAGE_VERSION="$CRJ_PACKAGE_VERSION" >> $GITHUB_OUTPUT
 
       - name: 'Create Release'
         id: create_release_step
@@ -254,7 +258,7 @@ jobs:
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
         CRJ_PRJ=${{ needs.create_release_job.outputs.CRJ_PRJ }}
         CRJ_RELEASE_NAME=${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}
-        read PACKAGE_VERSION <<<$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")
+        CRJ_PACKAGE_VERSION=${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}
 
         git fetch --tags
         git checkout tags/$CRJ_RELEASE_NAME
@@ -277,7 +281,7 @@ jobs:
 
         # Be very careful NOT to have white space after a backslash :-/
         echo python3 ../.github/bin/autopkg_spec.py \
-        --PACKAGE_VERSION "$PACKAGE_VERSION" \
+        --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
         --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
         --package_builder "$package_builder" \
@@ -286,7 +290,7 @@ jobs:
         --DOWNLOAD_PAGE $DOWNLOAD_PAGE \
         --DOCUMENTATION_PAGE $DOCUMENTATION_PAGE
         python3 ../.github/bin/autopkg_spec.py \
-          --PACKAGE_VERSION "$PACKAGE_VERSION" \
+          --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
           --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
           --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
           --package_builder "$package_builder" \
@@ -370,6 +374,8 @@ jobs:
 
         CRJ_BUILD="${{ needs.create_release_job.outputs.CRJ_BUILD }}"
         CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
+        CRJ_PACKAGE_VERSION=${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}
+        
         CRJ_AUTOTOOL_CONFIGURE="${{ needs.create_release_job.outputs.CRJ_AUTOTOOL_CONFIGURE }}"
         CRJ_PRJ="${{ needs.create_release_job.outputs.CRJ_PRJ }}"
         CRJ_GPG_NAME="${{ needs.create_release_job.outputs.CRJ_GPG_NAME }}"
