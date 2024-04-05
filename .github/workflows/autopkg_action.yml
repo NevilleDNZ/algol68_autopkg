@@ -87,9 +87,12 @@ jobs:
           esac
           
           # ToDo: get most recent release tag on trunk!
-          echo CRJ_RELEASE_NAME="${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" >> $GITHUB_OUTPUT
+          CRJ_RELEASE_NAME="${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" 
+          echo CRJ_RELEASE_NAME=$CRJ_RELEASE_NAME >> $GITHUB_OUTPUT
+
           read CRJ_PACKAGE_VERSION <<<$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")
           echo CRJ_PACKAGE_VERSION="$CRJ_PACKAGE_VERSION" >> $GITHUB_OUTPUT
+
           echo CRJ_BUILD="$CRJ_BUILD" >> $GITHUB_OUTPUT
 
           echo CRJ_USER_UPSTREAM="${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}" >> $GITHUB_OUTPUT
@@ -99,8 +102,8 @@ jobs:
           echo CRJ_GPG_NAME="NevilleDNZ:algol68:repo" >> $GITHUB_OUTPUT
           #echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
           echo CRJ_PRJ="${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" >> $GITHUB_OUTPUT # QQQ
-          echo $GITHUB_OUTPUT
-          cat $GITHUB_OUTPUT
+          #echo $GITHUB_OUTPUT
+          #cat $GITHUB_OUTPUT
 
       - name: 'Create Release'
         id: create_release_step
