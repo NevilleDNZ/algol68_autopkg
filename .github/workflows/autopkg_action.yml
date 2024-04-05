@@ -41,7 +41,8 @@ jobs:
 # actions/create-release@v1 to create releases:
 
   create_release_job: # a.k.a CRJ
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    runs-on: rhel9.3-x86_64
 
     env:
       CRJ_JOB_LEVEL_VAR: 'This is a job-level variable'
@@ -86,7 +87,7 @@ jobs:
           
           # ToDo: get most recent release tag on trunk!
           echo CRJ_RELEASE_NAME="${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" >> $GITHUB_OUTPUT
-          read CRJ_PACKAGE_VERSION <<<$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME"
+          read CRJ_PACKAGE_VERSION <<<$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")
           echo CRJ_BUILD="$CRJ_BUILD" >> $GITHUB_OUTPUT
 
           echo CRJ_USER_UPSTREAM="${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}" >> $GITHUB_OUTPUT
