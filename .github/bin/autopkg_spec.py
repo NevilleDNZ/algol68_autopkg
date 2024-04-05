@@ -300,9 +300,9 @@ README
 '''
     template_of_sect=template_of_sect_of_subfile[subdir+"changelog"]=OrderedDict()
     template_of_sect["head"]='''\
-{confdefs[PACKAGE_TARNAME]} ({confdefs[PACKAGE_VERSION]}-{opt_d.Build}-{opt_d.os_release}) unstable; urgency=medium
+{confdefs[PACKAGE_TARNAME]} ({opt_d.PACKAGE_VERSION}-{opt_d.Build}-{opt_d.os_release}) unstable; urgency=medium
 
-  * New upstream version {confdefs[PACKAGE_VERSION]}-{opt_d.Build}-{opt_d.os_release}
+  * New upstream version {opt_d.PACKAGE_VERSION}-{opt_d.Build}-{opt_d.os_release}
 
  -- {opt_d.Packager}  {opt_d.DEBPackDate}
 
@@ -416,7 +416,7 @@ Name: {confdefs[PACKAGE_TARNAME]}
 ### {sec_name} ###
 %define PACKAGE {confdefs[PACKAGE_TARNAME]}
 %define package_main {opt_d.package_main}
-Version: {confdefs[PACKAGE_VERSION]}
+Version: {opt_d.PACKAGE_VERSION}
 
 %{lc}lua:
     function trunc(str, len)
@@ -591,7 +591,7 @@ Source{enum}: {merge_extra_tools}
 
     template_of_sect_of_spec["head/patch"]="""\
 ### {sec_name}/{enum} ### nb. These can also be done via "pc_patch:" in %pc_prep
-Patch{enum}: {confdefs[PACKAGE_TARNAME]}-{confdefs[PACKAGE_VERSION]}-{patch}.patch
+Patch{enum}: {confdefs[PACKAGE_TARNAME]}-{opt_d.PACKAGE_VERSION}-{patch}.patch
 """
 
     template_of_sect_of_spec["head_description"]="""\
@@ -869,7 +869,7 @@ rm -rf $RPM_BUILD_ROOT
     template_of_sect_of_spec["changelog"]="""\
 
 %changelog
-* {opt_d.RPMPackDate} {opt_d.Packager} - {confdefs[PACKAGE_VERSION]}-{opt_d.Build}
+* {opt_d.RPMPackDate} {opt_d.Packager} - {opt_d.PACKAGE_VERSION}-{opt_d.Build}
 - {confdefs[PACKAGE_STRING]}-{opt_d.Build}.spec - release with newest {confdefs[PACKAGE_NAME]} version:
 1. for: rhel_8, fedora_35, suse_15, awsl_2, debian11, raspberryos11, ubuntu etc.
 2. on: aarch64, s390x, i686, x86_64 etc.
@@ -975,6 +975,8 @@ def print_autoconf_template(template_of_sect_of_subfile, req_d_of_subpkg_opt, co
 
     confdefs=OrderedDict( ( ( cdh["name"],(cdh["value"] if cdh["desc"] in ["str","code"] else cdh["value"]) )
             for cdh in subpkg_opt_d['confdefs.h.']['paragraph_0'] if "value" in cdh ) )
+    
+    if opt_d.PACKAGE_VERSION is not None: confdefs["PACKAGE_VERSION"]=opt_d.PACKAGE_VERSION
 
     for subfile_name,template_of_sect in template_of_sect_of_subfile.items():
         # with open(confdefs["PACKAGE_TARNAME"]+"-"+confdefs["PACKAGE_VERSION"]+".spec","w") as bld_subfile:
@@ -1457,7 +1459,6 @@ re_date= re.compile(r"^Version (?P<version>[^ ]*), (?P<month>[^ ]*) (?P<year>[0-
 re_point=re.compile(r"^[*] +(?P<text>.*)")
 re_text= re.compile(r"^(?P<text>.*)")
 
-
 def fmt_changelog(NEWS_l=["NEWS"]):
     bug_report=opt_d.bug_report
     out_l=[]
@@ -1663,6 +1664,7 @@ if __name__ == "__main__":
         Section="devel", # as per debian/control/Section
         Priority="optional", # as per debian/control/Priority
         # Build="""%(date +"y=%y m=%m D=%d"`; case $m in (01)M=0;;(02)M=0;((D=D+50));;(12)M=9;((D=D+50));;(*)((M=m-2));;esac; case $D in (?)D=0$D; esac; echo $y$M$D)""",
+        PACKAGE_VERSION=None, # otherwise get from confdefs
         Build="%r"%yymdd(datetime.date.today()),
         os_release="unknown",
 # pre a68g-3.1.9 was: #        License="GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007 - read[LICENSE]",

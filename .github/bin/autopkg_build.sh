@@ -47,6 +47,8 @@ if [ "$RUNNER_OS" == "Linux" ]; then
     # algol68g_3.2.0-23960.orig.tar.{bz2,gz,lzma,xz}
         tar -czf ../"$CRJ_PRJ"_$TAR.orig.tar.gz * # IF debian || ubuntu... ignore .github
         ls -l ../"$CRJ_PRJ"_$TAR.orig.tar.gz
+        # ../gawk_5.3.0-beta-2420437.orig.tar.gz
+        # ../gawk_5.3.0-2420437.orig.tar.{bz2,gz,lzma,xz}
         
     #   ./configure # https://stackoverflow.com/questions/62039244/does-git-store-the-file-creation-time
         ./configure # needs to be before tarball - i.e. "error: aborting due to unexpected upstream changes"
