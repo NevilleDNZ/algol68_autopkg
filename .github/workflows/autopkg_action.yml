@@ -77,7 +77,8 @@ jobs:
               (12) ((m=9,d+=50));; # append Dec to Nov, ie. Dec01=>951
               (*) ((m-=2));; # ... Sep, Oct, Nov are now months 7, 8, 9
           esac
-          (( Build_id=(((Y-2000)*10+m)*100+d)*100 + ((H*60+M)*60+S)*100/(24*60*60) ))
+          #(( Build_id=(((Y-2000)*10+m)*100+d)*100 + ((H*60+M)*60+S)*100/(24*60*60) )) # to 100th of day
+          (( Build_id=(((Y-2000)*10+m)*100+d)*100 + (H*4) )) # to 15min window
           
           CRJ_BUILD="${{ github.event.inputs.WFDP_BUILD         || 'YYmDD' }}"
           case "$CRJ_BUILD" in
@@ -134,12 +135,12 @@ jobs:
         matrix_os_rel_mach:
 #          - ${{ github.event.inputs.WFDP_OS_REL_MACH || 'rhel9.3-x86_64' }}
           - rhel9.3-x86_64
-          - rocky9.3-aarch64
+          # - rocky9.3-aarch64
           #- debian11-aarch64
           #- raspbian12-armv7l
           #- ubuntu-latest
           #- ubuntu-20.04
-          - fedora38-x86_64
+          # - fedora38-x86_64
           # - opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
 #        matrix_os_vm:
 #          - DOLLAR{{ github.event.inputs.WFDP_OS_VM || 'baremetal' }}
