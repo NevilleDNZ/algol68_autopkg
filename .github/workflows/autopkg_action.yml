@@ -280,7 +280,7 @@ jobs:
         package_builder=`../.github/bin/autopkg_mgr.sh echo builder`
         local_package_manager=`../.github/bin/autopkg_mgr.sh echo local` # eg. rpm or dpkg
 
-        # Be very careful NOT to have white space after a backslash :-?
+        # Be very careful NOT to have white space after a backslash :-/
         echo python3 ../.github/bin/autopkg_spec.py \
         --PACKAGE_VERSION "$CRJ_RELEASE_NAME" \
         --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
