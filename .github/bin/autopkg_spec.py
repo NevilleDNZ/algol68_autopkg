@@ -300,13 +300,13 @@ README
 '''
     template_of_sect=template_of_sect_of_subfile[subdir+"changelog"]=OrderedDict()
     template_of_sect["head"]='''\
-{confdefs[PACKAGE_NAME]} ({confdefs[PACKAGE_VERSION]}-{opt_d.Build}-{opt_d.os_release}) unstable; urgency=medium
+{confdefs[PACKAGE_TARNAME]} ({opt_d.PACKAGE_VERSION}-{opt_d.Build}-{opt_d.os_release}) unstable; urgency=medium
 
-  * New upstream version {confdefs[PACKAGE_VERSION]}-{opt_d.Build}-{opt_d.os_release}
+  * New upstream version {opt_d.PACKAGE_VERSION}-{opt_d.Build}-{opt_d.os_release}
 
  -- {opt_d.Packager}  {opt_d.DEBPackDate}
 
-{confdefs[PACKAGE_NAME]} (2.1.2-1) unstable; urgency=low
+{confdefs[PACKAGE_TARNAME]} (2.1.2-1) unstable; urgency=low
 
   * Initial release. (Closes: #598192)
 
@@ -319,14 +319,14 @@ README
     """
     template_of_sect=template_of_sect_of_subfile[subdir+"control"]=OrderedDict()
     template_of_sect["head"]='''\
-Source: {confdefs[PACKAGE_NAME]}
+Source: {confdefs[PACKAGE_TARNAME]}
 Section: {opt_d.Section}
 Priority: {opt_d.Priority}
 Maintainer: {confdefs[PACKAGE_BUGREPORT]}
 Standards-Version: 4.2.1
 Homepage: {opt_d.DOCUMENTATION_PAGE}
 
-Package: {confdefs[PACKAGE_NAME]}
+Package: {confdefs[PACKAGE_TARNAME]}
 Architecture: any
 Depends: ${lc}shlibs:Depends{rc}, ${lc}misc:Depends{rc}
 '''
@@ -416,7 +416,7 @@ Name: {confdefs[PACKAGE_TARNAME]}
 ### {sec_name} ###
 %define PACKAGE {confdefs[PACKAGE_TARNAME]}
 %define package_main {opt_d.package_main}
-Version: {confdefs[PACKAGE_VERSION]}
+Version: {opt_d.PACKAGE_VERSION}
 
 %{lc}lua:
     function trunc(str, len)
@@ -591,7 +591,7 @@ Source{enum}: {merge_extra_tools}
 
     template_of_sect_of_spec["head/patch"]="""\
 ### {sec_name}/{enum} ### nb. These can also be done via "pc_patch:" in %pc_prep
-Patch{enum}: {confdefs[PACKAGE_TARNAME]}-{confdefs[PACKAGE_VERSION]}-{patch}.patch
+Patch{enum}: {confdefs[PACKAGE_TARNAME]}-{opt_d.PACKAGE_VERSION}-{patch}.patch
 """
 
     template_of_sect_of_spec["head_description"]="""\
@@ -756,7 +756,7 @@ LDFLAGS="{opt_d.LDFLAGS} $LDFLAGS" ; export LDFLAGS
 
 # see results in first section
 %{lc}!?with_quiet:echo "_arch=%_arch" "_isa=%_isa"{rc}
-%{lc}!?with_quiet:echo "_host=%_host" "_build=%_build" "_target=%_target" "_target_cpu=%_target_cpu" "_target_os=%_target_os"{rc}
+%{lc}!?with_quiet:echo "_host=%_host" "_build=%_build" "_target=%_target" "_host_cpu=%_host_cpu" "_target_os=%_target_os"{rc}
 %{lc}!?with_quiet:echo "_host_platform=%_host_platform" "_build_platform=%_build_platform" "_target_platform=%_target_platform"{rc}
 %{lc}!?with_quiet:echo "configure_cross_build_opts=%configure_cross_build_opts";{rc}
 %{lc}!?with_quiet:echo Note: CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" FFLAGS="$FFLAGS" FCFLAGS="$FCFLAGS" LDFLAGS="$LDFLAGS"{rc}
@@ -869,8 +869,8 @@ rm -rf $RPM_BUILD_ROOT
     template_of_sect_of_spec["changelog"]="""\
 
 %changelog
-* {opt_d.RPMPackDate} {opt_d.Packager} - {confdefs[PACKAGE_VERSION]}-{opt_d.Build}
-- {confdefs[PACKAGE_STRING]}-{opt_d.Build}.spec - release with newist {confdefs[PACKAGE_NAME]} version:
+* {opt_d.RPMPackDate} {opt_d.Packager} - {opt_d.PACKAGE_VERSION}-{opt_d.Build}
+- {confdefs[PACKAGE_STRING]}-{opt_d.Build}.spec - release with newest {confdefs[PACKAGE_NAME]} version:
 1. for: rhel_8, fedora_35, suse_15, awsl_2, debian11, raspberryos11, ubuntu etc.
 2. on: aarch64, s390x, i686, x86_64 etc.
 {read[NEWS/changelog]}
@@ -975,6 +975,10 @@ def print_autoconf_template(template_of_sect_of_subfile, req_d_of_subpkg_opt, co
 
     confdefs=OrderedDict( ( ( cdh["name"],(cdh["value"] if cdh["desc"] in ["str","code"] else cdh["value"]) )
             for cdh in subpkg_opt_d['confdefs.h.']['paragraph_0'] if "value" in cdh ) )
+    
+    if opt_d.PACKAGE_VERSION is not None: 
+        print("PACKAGE_VERSION:",PACKAGE_VERSION)
+        confdefs["PACKAGE_VERSION"]=opt_d.PACKAGE_VERSION
 
     for subfile_name,template_of_sect in template_of_sect_of_subfile.items():
         # with open(confdefs["PACKAGE_TARNAME"]+"-"+confdefs["PACKAGE_VERSION"]+".spec","w") as bld_subfile:
@@ -1214,10 +1218,10 @@ def gen_dep_summary_of_lib_l(chapter_d, PACKAGE="algol68g"):
             BuildRequiresPkg=uniq(bld_req_bin_pkg + bld_req_hdr_pkg + bld_req_lib_pkg)
             DPKG_BuildRequiresPkg=uniq(bld_req_bin_pkg + bld_req_hdr_pkg + bld_req_lib_pkg)
 
-            #BuildRequiresCap=find_cap(BuildRequiresPkg, target_cpu="?")
+            #BuildRequiresCap=find_cap(BuildRequiresPkg, host_cpu="?")
             bld_req_bin_cap=find_cap(bld_req_bin_pkg, req="bin")
             bld_req_hdr_cap=find_cap(bld_req_hdr_pkg, req="hdr")
-            bld_req_lib_cap=find_cap(bld_req_lib_pkg, req="lib", target_cpu="x86_64")
+            bld_req_lib_cap=find_cap(bld_req_lib_pkg, req="lib", host_cpu="x86_64")
             BuildRequiresCap=uniq(bld_req_bin_cap + bld_req_hdr_cap + bld_req_lib_cap)
             YUM_BuildRequiresCap=find_cap(BuildRequiresPkg, req="yum")
 
@@ -1232,7 +1236,7 @@ def gen_dep_summary_of_lib_l(chapter_d, PACKAGE="algol68g"):
             DPKG_RunRequiresPkg =uniq(run_req_bin_pkg + run_req_lib_pkg)
 
             run_req_bin_cap=find_cap(run_req_bin_pkg, req="bin")
-            run_req_lib_cap=find_cap(run_req_lib_pkg, req="lib", target_cpu="x86_64")
+            run_req_lib_cap=find_cap(run_req_lib_pkg, req="lib", host_cpu="x86_64")
 
             #StaticRunRequiresCap=run_req_bin_pkg
             #run_req_lib_cap=bld_req_lib_pkg
@@ -1383,9 +1387,9 @@ re_suffix=re.compile(r"-(headers|headers-x86|devel|lib)$")
 
 re_colon_arch_colon_etc=re.compile(r":[^:]:.*")
 
-def find_cap(pkg_l, req="yum", target_cpu="noarch"):
+def find_cap(pkg_l, req="yum", host_cpu="noarch"):
     # yum for any pkg is specific to the platform, so does not need to be canonised.
-    target_cpu="" if target_cpu=="noarch" else re_quote.sub("",output_variable_d["target_cpu"]).join("()")
+    host_cpu="" if host_cpu=="noarch" else re_quote.sub("",output_variable_d["host_cpu"]).join("()")
     out_l=PrintableList()
     for pkg in pkg_l:
         # Note: `rpm -q --provides qqq` finds any package provising qqq, EVEN if it is not installed!
@@ -1408,7 +1412,7 @@ def find_cap(pkg_l, req="yum", target_cpu="noarch"):
 
             cap = best_cap or guess_cap or first_cap or pkg
 
-            #if cap.startswith(pkg) and ( target_cpu in cap or "(" not in pkg ):
+            #if cap.startswith(pkg) and ( host_cpu in cap or "(" not in pkg ):
             #    cap=re_cap_ver.sub(de_cap_ver if req=="lib" else "" ,cap)
     # special case: glibc
             if req=="hdr":
@@ -1456,7 +1460,6 @@ sample_out=""".vscode/
 re_date= re.compile(r"^Version (?P<version>[^ ]*), (?P<month>[^ ]*) (?P<year>[0-9]{4,5}) *")
 re_point=re.compile(r"^[*] +(?P<text>.*)")
 re_text= re.compile(r"^(?P<text>.*)")
-
 
 def fmt_changelog(NEWS_l=["NEWS"]):
     bug_report=opt_d.bug_report
@@ -1663,6 +1666,7 @@ if __name__ == "__main__":
         Section="devel", # as per debian/control/Section
         Priority="optional", # as per debian/control/Priority
         # Build="""%(date +"y=%y m=%m D=%d"`; case $m in (01)M=0;;(02)M=0;((D=D+50));;(12)M=9;((D=D+50));;(*)((M=m-2));;esac; case $D in (?)D=0$D; esac; echo $y$M$D)""",
+        PACKAGE_VERSION=None, # otherwise get from confdefs
         Build="%r"%yymdd(datetime.date.today()),
         os_release="unknown",
 # pre a68g-3.1.9 was: #        License="GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007 - read[LICENSE]",

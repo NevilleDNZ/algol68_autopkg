@@ -8,6 +8,9 @@ if [ "$CRJ_AUTOTOOL_CONFIGURE" = "force-preserve" ]; then
 elif [ "$CRJ_AUTOTOOL_CONFIGURE" = "force-remake" ]; then
     TOUCH="configure a68g-config.in a68g-config.h.in Makefile.in aclocal.m4"
     for f in $TOUCH; do sleep 1; touch $f; done
+elif [ "$CRJ_AUTOTOOL_CONFIGURE" = "touch-now" ]; then
+    NOW=`date +"%Y%m%d%H%M"`
+    find . -type d -name .git -prune -o -type f -print0 | xargs -0 touch -t $NOW
 fi
 
 if [ "$RUNNER_OS" == "Linux" ]; then
@@ -43,7 +46,10 @@ if [ "$RUNNER_OS" == "Linux" ]; then
     # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1015077
     # algol68g_3.2.0-23960.orig.tar.{bz2,gz,lzma,xz}
         tar -czf ../"$CRJ_PRJ"_$TAR.orig.tar.gz * # IF debian || ubuntu... ignore .github
-
+        ls -l ../"$CRJ_PRJ"_$TAR.orig.tar.gz
+        # ../gawk_5.3.0-beta-2420437.orig.tar.gz
+        # ../gawk_5.3.0-2420437.orig.tar.{bz2,gz,lzma,xz}
+        
     #   ./configure # https://stackoverflow.com/questions/62039244/does-git-store-the-file-creation-time
         ./configure # needs to be before tarball - i.e. "error: aborting due to unexpected upstream changes"
 
