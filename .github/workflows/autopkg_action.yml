@@ -60,6 +60,10 @@ jobs:
       CRJ_AUTOTOOL_CONFIGURE: ${{ steps.name_release_step.outputs.CRJ_AUTOTOOL_CONFIGURE }}
       CRJ_PRJ:                ${{ steps.name_release_step.outputs.CRJ_PRJ }}
       CRJ_GPG_NAME:           ${{ steps.name_release_step.outputs.CRJ_GPG_NAME }}
+      
+      CRJ_Source:             ${{ steps.name_release_step.outputs.CRJ_Source }}
+      CRJ_DOWNLOAD_PAGE:      ${{ steps.name_release_step.outputs.CRJ_DOWNLOAD_PAGE }}
+      CRJ_DOCUMENTATION_PAGE: ${{ steps.name_release_step.outputs.CRJ_DOCUMENTATION_PAGE }}
 
     steps:
 
@@ -78,7 +82,7 @@ jobs:
               (*) ((m-=2));; # ... Sep, Oct, Nov are now months 7, 8, 9
           esac
           #(( Build_id=(((Y-2000)*10+m)*100+d)*100 + ((H*60+M)*60+S)*100/(24*60*60) )) # to 100th of day
-          (( Build_id=(((Y-2000)*10+m)*100+d)*100 + (H*4) )) # to 15min window
+          (( Build_id=(((Y-2000)*10+m)*100+d)*100 + H*4 )) # to 15min window
           
           CRJ_BUILD="${{ github.event.inputs.WFDP_BUILD         || 'YYmDD' }}"
           case "$CRJ_BUILD" in
@@ -102,6 +106,15 @@ jobs:
           echo CRJ_GPG_NAME="NevilleDNZ:algol68:repo" >> $GITHUB_OUTPUT
           #echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
           echo CRJ_PRJ="${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" >> $GITHUB_OUTPUT # QQQ
+          
+          CRJ_Source=https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
+          CRJ_DOWNLOAD_PAGE=https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
+          CRJ_DOCUMENTATION_PAGE=https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
+
+          echo CRJ_Source="$CRJ_Source" >> $GITHUB_OUTPUT
+          echo CRJ_DOWNLOAD_PAGE="$CRJ_DOWNLOAD_PAGE" >> $GITHUB_OUTPUT
+          echo CRJ_DOCUMENTATION_PAGE="$CRJ_DOCUMENTATION_PAGE" >> $GITHUB_OUTPUT
+
           #echo $GITHUB_OUTPUT
           #cat $GITHUB_OUTPUT
 
@@ -266,18 +279,18 @@ jobs:
         CRJ_RELEASE_NAME=${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}
         CRJ_PACKAGE_VERSION=${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}
 
+        CRJ_Source=${{ needs.create_release_job.outputs.CRJ_Source }}
+        CRJ_DOWNLOAD_PAGE=${{ needs.create_release_job.outputs.CRJ_DOWNLOAD_PAGE }}
+        CRJ_DOCUMENTATION_PAGE=${{ needs.create_release_job.outputs.CRJ_DOCUMENTATION_PAGE }}
+
         git fetch --tags
         git checkout tags/$CRJ_RELEASE_NAME
-
-        Source=https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_RELEASE_NAME.tar.gz
-        DOWNLOAD_PAGE=https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
-        DOCUMENTATION_PAGE=https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
 
         git branch -a
 
         bld_opts=""
 
-        package_main=a68g
+        # package_main=a68g
 
         #--package_builder /usr/bin/dpkg-buildpackage \
         #--local_package_manager /usr/bin/dpkg
@@ -290,20 +303,21 @@ jobs:
         --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
         --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
-        --package_builder "$package_builder" \
+        --package_builder "$CRJ_package_builder" \
         --local_package_manager "$local_package_manager" \
         --Source $Source \
-        --DOWNLOAD_PAGE $DOWNLOAD_PAGE \
-        --DOCUMENTATION_PAGE $DOCUMENTATION_PAGE
+        --DOWNLOAD_PAGE $CRJ_DOWNLOAD_PAGE \
+        --DOCUMENTATION_PAGE $CRJ_DOCUMENTATION_PAGE
+
         python3 ../.github/bin/autopkg_spec.py \
-          --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
-          --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
-          --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
-          --package_builder "$package_builder" \
-          --local_package_manager "$local_package_manager" \
-          --Source $Source \
-          --DOWNLOAD_PAGE $DOWNLOAD_PAGE \
-          --DOCUMENTATION_PAGE $DOCUMENTATION_PAGE
+        --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
+        --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
+        --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
+        --package_builder "$CRJ_package_builder" \
+        --local_package_manager "$local_package_manager" \
+        --Source $Source \
+        --DOWNLOAD_PAGE $CRJ_DOWNLOAD_PAGE \
+        --DOCUMENTATION_PAGE $CRJ_DOCUMENTATION_PAGE
 
 # Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
 #   [ Where replace ABCDev68 with your GitHub login ]
