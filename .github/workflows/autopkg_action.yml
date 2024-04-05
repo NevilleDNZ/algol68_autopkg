@@ -98,7 +98,8 @@ jobs:
           echo CRJ_INCLUDE_LIBS="${{ github.event.inputs.WFDP_INCLUDE_LIBS   || 'full' }}" >> $GITHUB_OUTPUT
           echo CRJ_AUTOTOOL_CONFIGURE="${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}" >> $GITHUB_OUTPUT
           echo CRJ_GPG_NAME="NevilleDNZ:algol68:repo" >> $GITHUB_OUTPUT
-          echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
+          #echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
+          echo CRJ_PRJ="${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" >> $GITHUB_OUTPUT # QQQ
 
       - name: 'Create Release'
         id: create_release_step
@@ -134,7 +135,7 @@ jobs:
         matrix_os_rel_mach:
 #          - ${{ github.event.inputs.WFDP_OS_REL_MACH || 'rhel9.3-x86_64' }}
           - rhel9.3-x86_64
-          # - rocky9.3-aarch64
+          - rocky9.3-aarch64
           - debian11-aarch64
           - raspbian12-armv7l
           - ubuntu-latest
@@ -257,8 +258,15 @@ jobs:
       run: |
 
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
+        CRJ_PRJ=${{ needs.create_release_job.outputs.CRJ_PRJ }}
+        CRJ_RELEASE_NAME=${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}
+        
         git fetch --tags
-        git checkout tags/${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}
+        git checkout tags/$CRJ_RELEASE_NAME
+
+        Source=https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_RELEASE_NAME.tar.gz
+        DOWNLOAD_PAGE=https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
+        DOCUMENTATION_PAGE=https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
 
         git branch -a
 
@@ -273,14 +281,24 @@ jobs:
         local_package_manager=`../.github/bin/autopkg_mgr.sh echo local` # eg. rpm or dpkg
 
         # Be very careful NOT to have white space after a backslash :-/
+        echo python3 ../.github/bin/autopkg_spec.py \
+        --PACKAGE_VERSION "$CRJ_RELEASE_NAME" \
+        --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
+        --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
+        --package_builder "$package_builder" \
+        --local_package_manager "$local_package_manager" \
+        --Source $Source \
+        --DOWNLOAD_PAGE $DOWNLOAD_PAGE \
+        --DOCUMENTATION_PAGE $DOCUMENTATION_PAGE
         python3 ../.github/bin/autopkg_spec.py \
+          --PACKAGE_VERSION "$CRJ_RELEASE_NAME" \
           --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
           --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
           --package_builder "$package_builder" \
           --local_package_manager "$local_package_manager" \
-          --Source https://jmvdveer.home.xs4all.nl/algol68g-${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}.tar.gz \
-          --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
-          --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
+          --Source $Source \
+          --DOWNLOAD_PAGE $DOWNLOAD_PAGE \
+          --DOCUMENTATION_PAGE $DOCUMENTATION_PAGE
 
 # Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
 #   [ Where replace ABCDev68 with your GitHub login ]

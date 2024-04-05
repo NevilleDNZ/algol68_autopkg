@@ -34,7 +34,7 @@ on:
                 description: 'Upstream user (source of pkg)'
                 required: true
 #                default: 'NevilleDNZ'
-                default: 'NevilleDNZ-Downstream'
+                default: 'NevilleDNZ-downstream'
                 type: choice
                 options:
                     - 'NevilleDNZ'
@@ -67,12 +67,15 @@ on:
             WFDP_RELEASE_NAME:
                 description: 'Release to build'
                 required: true
-                default: '5.3.0'
+                default: '5.3.0-beta'
                 type: choice
                 options:
                     - '5.3.0'
+                    - '5.3.0-beta'
                     - '5.2.2'
+                    - '5.2.2-beta'
                     - '5.2.1'
+                    - '5.2.1-beta'
                     - '1.4.0'
                     - '1.8.0'
                     - '1.9.0'
@@ -263,11 +266,12 @@ on:
             WFDP_AUTOTOOL_CONFIGURE:
                 description: 'AutoTool "configure" file - timestamp can be mangeled by git'
                 required: true
-                default: 'force-preserve'
+                default: 'touch-now'
                 type: choice
                 options:
                     - force-preserve
                     - force-remake
+                    - touch-now
                     - not-mangled
                     
 #      jobs:
