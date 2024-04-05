@@ -73,7 +73,9 @@ jobs:
         id: name_release_step
         run: |
           cd ${{ github.workspace }}
-          
+
+          OUTPUT(){ case "$#" in (3) eval $1="'$3'"; esac; eval echo $1='"$'"$1"'"' >> $GITHUB_OUTPUT; }
+
           read Y m d H M S <<<$(date +"%Y %_m %_d %_H %_M %_S")
           case $m in
               (1) m=0;; # make Jan/Feb the zeroth month. Jan01=>001
@@ -89,34 +91,25 @@ jobs:
             (YYmDD|"") CRJ_BUILD="$Build_id";;
           # (*)        CRJ_BUILD="$CRJ_BUILD";;
           esac
+          OUTPUT CRJ_BUILD
           
           # ToDo: get most recent release tag on trunk!
-          CRJ_RELEASE_NAME="${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" 
-          echo CRJ_RELEASE_NAME=$CRJ_RELEASE_NAME >> $GITHUB_OUTPUT
+          OUTPUT CRJ_RELEASE_NAME := "${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" 
+          OUTPUT CRJ_PACKAGE_VERSION := "$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")"
 
-          read CRJ_PACKAGE_VERSION <<<$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")
-          echo CRJ_PACKAGE_VERSION="$CRJ_PACKAGE_VERSION" >> $GITHUB_OUTPUT
-
-          echo CRJ_BUILD="$CRJ_BUILD" >> $GITHUB_OUTPUT
-
-          echo CRJ_USER_UPSTREAM="${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}" >> $GITHUB_OUTPUT
-          echo CRJ_PRJ_UPSTREAM="${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" >> $GITHUB_OUTPUT
-          echo CRJ_INCLUDE_LIBS="${{ github.event.inputs.WFDP_INCLUDE_LIBS   || 'full' }}" >> $GITHUB_OUTPUT
-          echo CRJ_AUTOTOOL_CONFIGURE="${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}" >> $GITHUB_OUTPUT
-          echo CRJ_GPG_NAME="NevilleDNZ:algol68:repo" >> $GITHUB_OUTPUT
-          #echo CRJ_PRJ="algol68g" >> $GITHUB_OUTPUT
-          echo CRJ_PRJ="${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" >> $GITHUB_OUTPUT # QQQ
+          OUTPUT CRJ_USER_UPSTREAM := "${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}"
+          OUTPUT CRJ_PRJ_UPSTREAM :=  "${{ github.event.inputs.WFDP_PRJ_UPSTREAM  || 'algol68g-staging' }}"
+          OUTPUT CRJ_INCLUDE_LIBS :=  "${{ github.event.inputs.WFDP_INCLUDE_LIBS  || 'full' }}"
+          OUTPUT CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}"
+          OUTPUT CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
+          OUTPUT CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
           
-          CRJ_Source=https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
-          CRJ_DOWNLOAD_PAGE=https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
-          CRJ_DOCUMENTATION_PAGE=https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
+          OUTPUT CRJ_Source := https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
+          OUTPUT CRJ_DOWNLOAD_PAGE := https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
+          OUTPUT CRJ_DOCUMENTATION_PAGE := https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
 
-          echo CRJ_Source="$CRJ_Source" >> $GITHUB_OUTPUT
-          echo CRJ_DOWNLOAD_PAGE="$CRJ_DOWNLOAD_PAGE" >> $GITHUB_OUTPUT
-          echo CRJ_DOCUMENTATION_PAGE="$CRJ_DOCUMENTATION_PAGE" >> $GITHUB_OUTPUT
-
-          #echo $GITHUB_OUTPUT
-          #cat $GITHUB_OUTPUT
+          echo $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
 
       - name: 'Create Release'
         id: create_release_step
