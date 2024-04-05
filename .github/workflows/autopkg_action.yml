@@ -67,22 +67,16 @@ jobs:
         id: name_release_step
         run: |
           cd ${{ github.workspace }}
-
-          eval `date +"Y=%Y m=%m d=%d"`
-          y=`expr $Y - 2000`
-
+          
+          read Y m d H M S <<<$(date +"%Y %_m %_d %_H %_M %_S")
           case $m in
-              (01) m=0;; # make Jan/Feb the zeroth month.
-              (02) m=0 d=`expr $d + 50`;; # append Feb to Jan
-              (12) m=9 d=`expr $d + 50`;; # append Dec to Nov
-              (*)  m=`expr $m - 2`;; # ... Sep, Oct, Nov are now ... 7, 8, 9
+              (1) m=0;; # make Jan/Feb the zeroth month. Jan01=>001
+              (2) ((m=0,d+=50));; # append Feb to Jan, ie. Feb01=>051
+              (12) ((m=9,d+=50));; # append Dec to Nov, ie. Dec01=>951
+              (*) ((m-=2));; # ... Sep, Oct, Nov are now months 7, 8, 9
           esac
+          (( Build_id=(((Y-2000)*10+m)*100+d)*100 + ((H*60+M)*60+S)*100/(24*60*60) ))
           
-          eval `date '+((d_pc=((%_H "*" 60 + %_M) "*" 60 + %_S) / 864))'`
-          
-          Build_id=$y$m$d
-          Build_id=$y$m$d$d_pc
-
           CRJ_BUILD="${{ github.event.inputs.WFDP_BUILD         || 'YYmDD' }}"
           case "$CRJ_BUILD" in
             (YYmDD|"") CRJ_BUILD="$Build_id";;
