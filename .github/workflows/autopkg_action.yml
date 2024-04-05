@@ -303,7 +303,7 @@ jobs:
         --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
         --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
-        --package_builder "$CRJ_package_builder" \
+        --package_builder "$package_builder" \
         --local_package_manager "$local_package_manager" \
         --Source "$CRJ_Source" \
         --DOWNLOAD_PAGE "$CRJ_DOWNLOAD_PAGE" \
@@ -313,7 +313,7 @@ jobs:
         --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
         --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
-        --package_builder "$CRJ_package_builder" \
+        --package_builder "$package_builder" \
         --local_package_manager "$local_package_manager" \
         --Source "$CRJ_Source" \
         --DOWNLOAD_PAGE "$CRJ_DOWNLOAD_PAGE" \

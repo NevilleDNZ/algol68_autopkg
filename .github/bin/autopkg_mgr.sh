@@ -69,9 +69,9 @@ translate_to_apt(){ # mimic dnf
         (build|builder)
             $OPT_ECHO dpkg-buildpackage "$@"
         ;;
-        (local) shift; $OPT_ECHO rpm "$@";;
-        (ext) shift; $OPT_ECHO .rpm "$@";;
-        (mime) shift; $OPT_ECHO application/x-rpm "$@";;
+        (local) shift; $OPT_ECHO dpkg "$@";;
+        (ext) shift; $OPT_ECHO .deb "$@";;
+        (mime) shift; $OPT_ECHO application/vnd.debian.binary-package "$@";;
         (arch) shift; $OPT_ECHO `dpkg --print-architecture` "$@";;
         (_arch) shift; $OPT_ECHO _`dpkg --print-architecture` "$@";;
         (*) $OPT_ECHO "$MGR" "$action" "$@";;
