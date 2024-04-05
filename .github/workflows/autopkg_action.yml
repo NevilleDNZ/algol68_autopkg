@@ -281,6 +281,15 @@ jobs:
         local_package_manager=`../.github/bin/autopkg_mgr.sh echo local` # eg. rpm or dpkg
 
         # Be very careful NOT to have white space after a backslash :-/
+        echo python3 ../.github/bin/autopkg_spec.py \
+        --PACKAGE_VERSION "$CRJ_RELEASE_NAME" \
+        --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \
+        --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
+        --package_builder "$package_builder" \
+        --local_package_manager "$local_package_manager" \
+        --Source $Source \
+        --DOWNLOAD_PAGE $DOWNLOAD_PAGE \
+        --DOCUMENTATION_PAGE $DOCUMENTATION_PAGE
         python3 ../.github/bin/autopkg_spec.py \
           --PACKAGE_VERSION "$CRJ_RELEASE_NAME" \
           --Build "${{ needs.create_release_job.outputs.CRJ_BUILD }}" \

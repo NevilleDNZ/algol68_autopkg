@@ -976,7 +976,9 @@ def print_autoconf_template(template_of_sect_of_subfile, req_d_of_subpkg_opt, co
     confdefs=OrderedDict( ( ( cdh["name"],(cdh["value"] if cdh["desc"] in ["str","code"] else cdh["value"]) )
             for cdh in subpkg_opt_d['confdefs.h.']['paragraph_0'] if "value" in cdh ) )
     
-    if opt_d.PACKAGE_VERSION is not None: confdefs["PACKAGE_VERSION"]=opt_d.PACKAGE_VERSION
+    if opt_d.PACKAGE_VERSION is not None: 
+        print("PACKAGE_VERSION:",PACKAGE_VERSION)
+        confdefs["PACKAGE_VERSION"]=opt_d.PACKAGE_VERSION
 
     for subfile_name,template_of_sect in template_of_sect_of_subfile.items():
         # with open(confdefs["PACKAGE_TARNAME"]+"-"+confdefs["PACKAGE_VERSION"]+".spec","w") as bld_subfile:
