@@ -42,7 +42,8 @@ jobs:
 
   create_release_job: # a.k.a CRJ
     # runs-on: ubuntu-latest
-    runs-on: rhel9.3-x86_64
+    # runs-on: rhel9.3-x86_64
+    runs-on: Linux
 
     env:
       CRJ_JOB_LEVEL_VAR: 'This is a job-level variable'
