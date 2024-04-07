@@ -101,28 +101,29 @@ jobs:
           output CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}"
           output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
           output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
+          q="'" qq='"'
 
           case "$CRJ_PRJ" in
             (algol68g*)
-              output CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := $q\
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
-              --package_main a68g 
+              --package_main a68g$q
             ;;
             (chess)
-              output CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := $q\
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main src/gnuchess
+              --package_main src/gnuchess$q
             ;;
             (gawk|*)
-              output CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := $q\
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main $CRJ_PRJ
+              --package_main $CRJ_PRJ$q
             ;;
           esac
 
