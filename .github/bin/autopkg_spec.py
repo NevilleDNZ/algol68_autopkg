@@ -541,7 +541,8 @@ URL: {opt_d.DOCUMENTATION_PAGE}
 %define __attr_x 755
 
 # prefer uid&gid=GNU
-%define A68 root
+%define BUILDERID root
+%define BUILDERGP root
 
 # useful macros
 %define prelude(o:s:n:)  %{lc}?with_keep_scripts:ln -f "$0" `dirname "$0"`/rpmbuild-$USER-%-o*-%-s*-%-n*.sh{rc}
@@ -834,18 +835,19 @@ if [ $with_{SUBPACKAGE} == 1 ]; then
     #endif
 fi
 
-
 """
+    '''depr:
+
     template_of_sect_of_spec["files/subpkg"]="""\
 ### {sec_name}/{SUBPACKAGE}  ###
 %if %{lc}with {SUBPACKAGE}{rc}
 
 %files -n %PACKAGE-{SUBPACKAGE}
 
-%defattr(%__attr_x,%A68,%A68,%__attr_x)
+%defattr(%__attr_x,%BUILDERID,%BUILDERGP,%__attr_x)
 %_bindir/%package_main
 %_bindir/%package_main-{SUBPACKAGE}
-%defattr(%__attr_r,%A68,%A68,%__attr_x)
+%defattr(%__attr_r,%BUILDERID,%BUILDERGP,%__attr_x)
 # pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main-*.h
 # pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main.h
 %_includedir/%PACKAGE/%package_main-*.h
@@ -854,6 +856,38 @@ fi
 %doc %_mandir/man?/*
 %doc %_docdir_pkg/*
 
+# add-license-file-here
+# pre a68g-3.1.9 was: #license LICENSE
+%license COPYING
+%endif
+
+"""
+'''
+    def bindir(): return """
+%defattr(%__attr_x,%BUILDERID,%BUILDERGP,%__attr_x)
+%_bindir/%package_main
+%_bindir/%package_main-{SUBPACKAGE}
+"""
+
+# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main-*.h
+# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main.h
+    def includedir(): return """
+%defattr(%__attr_r,%BUILDERID,%BUILDERGP,%__attr_x)
+%_includedir/%PACKAGE/%package_main-*.h
+%_includedir/%PACKAGE/%package_main.h
+"""
+    template_of_sect_of_spec["files/subpkg"]="""\
+### {sec_name}/{SUBPACKAGE}  ###
+%if %{lc}with {SUBPACKAGE}{rc}
+
+%files -n %PACKAGE-{SUBPACKAGE}
+"""+(
+    bindir()+
+    includedir()
+)+"""
+ %doc %_mandir/man?/*
+ %doc %_docdir_pkg/*
+ 
 # add-license-file-here
 # pre a68g-3.1.9 was: #license LICENSE
 %license COPYING
