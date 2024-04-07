@@ -84,12 +84,12 @@ jobs:
               (12) ((m=9,d+=50));; # append Dec to Nov, ie. Dec01=>951
               (*) ((m-=2));; # ... Sep, Oct, Nov are now months 7, 8, 9
           esac
-          #(( Build_id=(((Y-2000)*10+m)*100+d)*100 + ((H*60+M)*60+S)*100/(24*60*60) )) # to 100th of day
-          (( Build_id=(((Y-2000)*10+m)*100+d)*100 + H*4 )) # to 15min window
+          #(( yymdd00=(((Y-2000)*10+m)*100+d)*100 + ((H*60+M)*60+S)*100/(24*60*60) )) # to 100th of day
+          (( yymdd00=(((Y-2000)*10+m)*100+d)*100 + H*4 )) # to 15min window
           
           CRJ_BUILD="${{ github.event.inputs.WFDP_BUILD         || 'YYmDD' }}"
           case "$CRJ_BUILD" in
-            (YYmDD|"") CRJ_BUILD="$Build_id";;
+            (YYmDD|"") CRJ_BUILD="$yymdd00";;
           # (*)        CRJ_BUILD="$CRJ_BUILD";;
           esac
           output CRJ_BUILD
