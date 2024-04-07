@@ -855,7 +855,7 @@ fi
     def includedir(): 
         if opt_d.includedir_l:
             return "%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_includedir/%PACKAGE"+file for file in opt_d.includedir_l
+                "%_includedir/%PACKAGE/"+file for file in opt_d.includedir_l
                 )+"\n"*2
         else:
             return ""
@@ -1738,7 +1738,7 @@ if __name__ == "__main__":
         build_staging_dir=".",
         insert_headings=False,
         bindir_l="%package_main %package_main-{SUBPACKAGE}".split(),
-        includedir_l="%package_main.h %package_main-*.h".split(),
+        includedir_l="%package_main.h".split(),
     )
 
 # %_bindir/%package_main
