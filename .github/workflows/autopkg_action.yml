@@ -104,28 +104,25 @@ jobs:
 
           case "$CRJ_PRJ" in
             (algol68g*)
-              output CRJ_PKG_BLD_OPTIONS := " \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
-              --package_main a68g \
-              "
+              --package_main a68g 
             ;;
             (chess)
-              output CRJ_PKG_BLD_OPTIONS := " \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main src/gnuchess \
-              "
+              --package_main src/gnuchess
             ;;
             (gawk|*)
-              output CRJ_PKG_BLD_OPTIONS := " \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main $CRJ_PRJ \
-              "
+              --package_main $CRJ_PRJ
             ;;
           esac
 
