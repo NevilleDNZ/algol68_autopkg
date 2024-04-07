@@ -1664,7 +1664,7 @@ if __name__ == "__main__":
                     'FFLAGS': '-g -pie',
                     'FCFLAGS': '-g -pie',
                     'LD': 'ld', 'static_LDFLAGS': '-Wl,-static',
-                    'LDFLAGS': '-g -pie -L /usr/lib64/R/lib',
+                    'LDFLAGS': '-g -pie -L/usr/lib64/R/lib',
                     'core_tests': 'Core tests.',
                     'package_main': 'a68g',
                     'verbose_requires': False,
@@ -1721,8 +1721,8 @@ if __name__ == "__main__":
         # gcc: Supported emulations: elf_x86_64 elf32_x86_64 elf_i386 elf_iamcu i386linux elf_l1om elf_k1om i386pep i386pe
         LD="ld",
         static_LDFLAGS="-Wl,-static",
-        # -L /usr/lib64/R/lib is required for Suse15.3
-        LDFLAGS=optflags+" -L /usr/lib64/R/lib", # +" -shared",
+        # -L/usr/lib64/R/lib is required for Suse15.3
+        LDFLAGS=optflags+" -L/usr/lib64/R/lib", # +" -shared",
         # target="i686-all-linux-gnu",
         core_tests="Core tests.",
         package_main="a68g",
