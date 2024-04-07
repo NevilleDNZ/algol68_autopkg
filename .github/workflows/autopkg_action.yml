@@ -74,7 +74,6 @@ jobs:
 
           output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
 
-
           read Y m d H M S <<<$(date +"%Y %_m %_d %_H %_M %_S")
           case $m in
               (1) m=0;; # make Jan/Feb the zeroth month. Jan01=>001
@@ -103,7 +102,7 @@ jobs:
           output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
           output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
 
-          q="'" qq='"'
+          # q="'" qq='"'
 
           case "$CRJ_PRJ" in
             (algol68g*)
