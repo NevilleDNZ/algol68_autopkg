@@ -72,7 +72,7 @@ jobs:
         run: |
           cd ${{ github.workspace }}
 
-          output(){ case "$#" in (3) eval $1="'$3'"; esac; eval echo $1='"$'"$1"'"' >> $GITHUB_OUTPUT; }
+          output(){ case "$2" in (:=) n=$1; shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
 
           read Y m d H M S <<<$(date +"%Y %_m %_d %_H %_M %_S")
           case $m in
@@ -243,7 +243,7 @@ jobs:
       env:
         S_STEP_LEVEL_VAR: 'This is a step-level variable'
       run: |
-        output(){ case "$#" in (3) eval $1="'$3'"; esac; eval echo $1='"$'"$1"'"' >> $GITHUB_OUTPUT; }
+        output(){ case "$2" in (:=) n=$1; shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
 
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
 
@@ -396,7 +396,7 @@ jobs:
         GPG_TTY: $(tty)
         DEBSIGN_OPTS: "--no-tty --batch"
       run: |
-        output(){ case "$#" in (3) eval $1="'$3'"; esac; eval echo $1='"$'"$1"'"' >> $GITHUB_OUTPUT; }
+        output(){ case "$2" in (:=) n=$1; shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
 
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
 
