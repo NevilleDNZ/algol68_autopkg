@@ -85,7 +85,7 @@ jobs:
               (*) ((m-=2));; # ... Sep, Oct, Nov are now months 7, 8, 9
           esac
           #(( yymdd00=(((Y-2000)*10+m)*100+d)*100 + ((H*60+M)*60+S)*100/(24*60*60) )) # to 100th of day
-          (( yymdd00=(((Y-2000)*10+m)*100+d)*100 + H*4 )) # to 15min window
+          (( yymdd00=(((Y-2000)*10+m)*100+d)*100 + H*4+M/15 )) # to 15min window
           
           CRJ_BUILD="${{ github.event.inputs.WFDP_BUILD         || 'YYmDD' }}"
           case "$CRJ_BUILD" in
