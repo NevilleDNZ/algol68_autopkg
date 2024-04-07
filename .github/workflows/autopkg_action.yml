@@ -72,7 +72,8 @@ jobs:
         run: |
           cd ${{ github.workspace }}
 
-          output(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
+          output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
+          qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
           read Y m d H M S <<<$(date +"%Y %_m %_d %_H %_M %_S")
           case $m in
@@ -104,21 +105,21 @@ jobs:
 
           case "$CRJ_PRJ" in
             (algol68g*)
-              output CRJ_PKG_BLD_OPTIONS := \
+              qoutput CRJ_PKG_BLD_OPTIONS := \
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
               --package_main a68g
             ;;
             (chess)
-              output CRJ_PKG_BLD_OPTIONS := \
+              qoutput CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
               --package_main src/gnuchess
             ;;
             (gawk|*)
-              output CRJ_PKG_BLD_OPTIONS := \
+              qoutput CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
@@ -240,7 +241,8 @@ jobs:
       env:
         S_STEP_LEVEL_VAR: 'This is a step-level variable'
       run: |
-        output(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
+        output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
+        qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
 
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
@@ -391,7 +393,8 @@ jobs:
         GPG_TTY: $(tty)
         DEBSIGN_OPTS: "--no-tty --batch"
       run: |
-        output(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
+        output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
+        qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
 
         cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
