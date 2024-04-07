@@ -61,10 +61,7 @@ jobs:
       CRJ_AUTOTOOL_CONFIGURE: ${{ steps.name_release_step.outputs.CRJ_AUTOTOOL_CONFIGURE }}
       CRJ_PRJ:                ${{ steps.name_release_step.outputs.CRJ_PRJ }}
       CRJ_GPG_NAME:           ${{ steps.name_release_step.outputs.CRJ_GPG_NAME }}
-      
-      CRJ_Source:             ${{ steps.name_release_step.outputs.CRJ_Source }}
-      CRJ_DOWNLOAD_PAGE:      ${{ steps.name_release_step.outputs.CRJ_DOWNLOAD_PAGE }}
-      CRJ_DOCUMENTATION_PAGE: ${{ steps.name_release_step.outputs.CRJ_DOCUMENTATION_PAGE }}
+      CRJ_PKG_BLD_OPTIONS:    ${{ steps.name_release_step.outputs.CRJ_PKG_BLD_OPTIONS }}
 
     steps:
 
@@ -104,10 +101,33 @@ jobs:
           output CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}"
           output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
           output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
-          
-          output CRJ_Source := https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
-          output CRJ_DOWNLOAD_PAGE := https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
-          output CRJ_DOCUMENTATION_PAGE := https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
+
+          case "$CRJ_PRJ" in
+            (algol68g*)
+              output CRJ_PKG_BLD_OPTIONS := "
+              --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
+              --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html
+              --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html
+              --package_main a68g
+              "
+            ;;
+            (chess)
+              output CRJ_PKG_BLD_OPTIONS := "
+              --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
+              --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ
+              --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual
+              --package_main src/gnuchess
+              "
+            ;;
+            (gawk|*)
+              output CRJ_PKG_BLD_OPTIONS := "
+              --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz
+              --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ
+              --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual
+              --package_main $CRJ_PRJ
+              "
+            ;;
+          esac
 
           echo $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
@@ -274,9 +294,7 @@ jobs:
         CRJ_RELEASE_NAME=${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}
         CRJ_PACKAGE_VERSION=${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}
 
-        CRJ_Source=${{ needs.create_release_job.outputs.CRJ_Source }}
-        CRJ_DOWNLOAD_PAGE=${{ needs.create_release_job.outputs.CRJ_DOWNLOAD_PAGE }}
-        CRJ_DOCUMENTATION_PAGE=${{ needs.create_release_job.outputs.CRJ_DOCUMENTATION_PAGE }}
+        CRJ_PKG_BLD_OPTIONS=${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}
 
         git fetch --tags
         git checkout tags/$CRJ_RELEASE_NAME
@@ -300,9 +318,7 @@ jobs:
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
         --package_builder "$package_builder" \
         --local_package_manager "$local_package_manager" \
-        --Source "$CRJ_Source" \
-        --DOWNLOAD_PAGE "$CRJ_DOWNLOAD_PAGE" \
-        --DOCUMENTATION_PAGE "$CRJ_DOCUMENTATION_PAGE"
+          $CRJ_PKG_BLD_OPTIONS
 
         python3 ../.github/bin/autopkg_spec.py \
         --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
@@ -312,7 +328,8 @@ jobs:
         --local_package_manager "$local_package_manager" \
         --Source "$CRJ_Source" \
         --DOWNLOAD_PAGE "$CRJ_DOWNLOAD_PAGE" \
-        --DOCUMENTATION_PAGE "$CRJ_DOCUMENTATION_PAGE"
+        --DOCUMENTATION_PAGE "$CRJ_DOCUMENTATION_PAGE" \
+          $CRJ_PKG_BLD_OPTIONS
 
 # Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
 #   [ Where replace ABCDev68 with your GitHub login ]

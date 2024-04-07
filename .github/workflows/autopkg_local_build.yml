@@ -49,6 +49,7 @@ on:
                 options:
                     - 'gawk'
                     - 'gawk-downstream'
+                    - 'chess'
                     - 'algol68g'
                     - 'algol68g-staging'
                     - 'algol68g-preview'
@@ -67,9 +68,10 @@ on:
             WFDP_RELEASE_NAME:
                 description: 'Release to build'
                 required: true
-                default: '5.3.0-beta'
+                default: '5.3.0'
                 type: choice
                 options:
+                    - '6.2.9'
                     - '5.3.0'
                     - '5.3.0-beta'
                     - '5.2.2'

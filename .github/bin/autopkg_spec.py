@@ -830,6 +830,7 @@ with_{SUBPACKAGE}=%{lc}with {SUBPACKAGE}{rc}
 ### {sec_name}/{SUBPACKAGE} ###
 if [ $with_{SUBPACKAGE} == 1 ]; then
     #if #{lc}with {SUBPACKAGE}{rc}
+    echo ECHO %make_install %make_install_dirs
     %make_install %make_install_dirs
     %__install --mode %__attr_x %package_main-{SUBPACKAGE} $RPM_BUILD_ROOT%_bindir/%package_main-{SUBPACKAGE}
     #endif
