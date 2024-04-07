@@ -854,7 +854,7 @@ fi
 
     def includedir(): 
         if opt_d.includedir_l:
-            return "%defattr(%__attr_r,%__attr_x,%BldUID,%BldGID)\nZZZZ"+"\n".join(
+            return "%defattr(%__attr_r,%__attr_x,%BldUID,%BldGID)\n"+"\n".join(
                 "%_includedir/%PACKAGE"+file for file in opt_d.includedir_l
                 )+"\n"*2
         else:
