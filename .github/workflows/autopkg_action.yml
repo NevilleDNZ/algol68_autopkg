@@ -105,6 +105,9 @@ jobs:
 
           case "$CRJ_PRJ" in
             (algol68g*)
+              output CRJ_PKG_BLD_OPTIONS := 
+            ;;
+            (Algol68g*)
               output CRJ_PKG_BLD_OPTIONS := $q\
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
