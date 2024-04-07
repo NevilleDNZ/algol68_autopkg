@@ -101,13 +101,10 @@ jobs:
           output CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}"
           output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
           output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
-          q="'" qq='"'
+          # q="'" qq='"'
 
           case "$CRJ_PRJ" in
             (algol68g*)
-              output CRJ_PKG_BLD_OPTIONS := 
-            ;;
-            (Algol68g*)
               output CRJ_PKG_BLD_OPTIONS := $q\
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
@@ -327,9 +324,6 @@ jobs:
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
         --package_builder "$package_builder" \
         --local_package_manager "$local_package_manager" \
-        --Source "$CRJ_Source" \
-        --DOWNLOAD_PAGE "$CRJ_DOWNLOAD_PAGE" \
-        --DOCUMENTATION_PAGE "$CRJ_DOCUMENTATION_PAGE" \
           $CRJ_PKG_BLD_OPTIONS
 
 # Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
