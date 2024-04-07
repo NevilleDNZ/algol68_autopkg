@@ -55,6 +55,11 @@ jobs:
       CRJ_PACKAGE_VERSION: ${{ steps.name_release_step.outputs.CRJ_PACKAGE_VERSION }}
       CRJ_BUILD:           ${{ steps.name_release_step.outputs.CRJ_BUILD }}
 
+      CRJ_draft:           ${{ steps.name_release_step.outputs.CRJ_draft }}
+      CRJ_prerelease:      ${{ steps.name_release_step.outputs.CRJ_prerelease }}
+      CRJ_title:           ${{ steps.name_release_step.outputs.CRJ_title }}
+      CRJ_body:            ${{ steps.name_release_step.outputs.CRJ_body }}
+
       CRJ_USER_UPSTREAM:      ${{ steps.name_release_step.outputs.CRJ_USER_UPSTREAM }}
       CRJ_PRJ_UPSTREAM:       ${{ steps.name_release_step.outputs.CRJ_PRJ_UPSTREAM }}
       CRJ_INCLUDE_LIBS:       ${{ steps.name_release_step.outputs.CRJ_INCLUDE_LIBS }}
@@ -103,6 +108,11 @@ jobs:
           output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
           output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
 
+          output CRJ_draft := true
+          output CRJ_prerelease := true
+          output CRJ_title := $CRJ_PRJ-$CRJ_PACKAGE_VERSION-$CRJ_BUILD
+          output CRJ_body := Draft/Prerelease
+
           case "$CRJ_PRJ" in
             (algol68g*)
               qoutput CRJ_PKG_BLD_OPTIONS := \
@@ -149,12 +159,12 @@ jobs:
           # release_name: Release v${{ github.run_number }}
 
           tag_name:             ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}-${{ steps.name_release_step.outputs.CRJ_BUILD }}
-          release_name: Release ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}-${{ steps.name_release_step.outputs.CRJ_BUILD }}
-          draft: false
-          prerelease: false
+          release_name: Release ${{ steps.name_release_step.outputs.CRJ_PRJ }}-${{ steps.name_release_step.outputs.CRJ_PACKAGE_VERSION }}-${{ steps.name_release_step.outputs.CRJ_BUILD }}
+          draft: ${{ steps.name_release_step.outputs.CRJ_draft }}
+          prerelease: ${{ steps.name_release_step.outputs.CRJ_prerelease }}
           body: |
-            ## What's Changed...
-            * Under construction.
+            ## ${{ steps.name_release_step.outputs.CRJ_title }}
+            * ${{ steps.name_release_step.outputs.CRJ_body }}
 
   os_matrix_job: # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
     # a.k.a. OMJ
