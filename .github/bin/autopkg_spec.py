@@ -537,11 +537,12 @@ URL: {opt_d.DOCUMENTATION_PAGE}
 %default_with keep_scripts
 
 # various constants
-%define __attr_r 644
-%define __attr_x 755
+%define __attr_r 0644
+%define __attr_x 0755
 
 # prefer uid&gid=GNU
-%define A68 root
+%define PkgUID root
+%define PkgGID root
 
 # useful macros
 %define prelude(o:s:n:)  %{lc}?with_keep_scripts:ln -f "$0" `dirname "$0"`/rpmbuild-$USER-%-o*-%-s*-%-n*.sh{rc}
@@ -829,31 +830,53 @@ with_{SUBPACKAGE}=%{lc}with {SUBPACKAGE}{rc}
 ### {sec_name}/{SUBPACKAGE} ###
 if [ $with_{SUBPACKAGE} == 1 ]; then
     #if #{lc}with {SUBPACKAGE}{rc}
+    echo ECHO %make_install %make_install_dirs
     %make_install %make_install_dirs
     %__install --mode %__attr_x %package_main-{SUBPACKAGE} $RPM_BUILD_ROOT%_bindir/%package_main-{SUBPACKAGE}
     #endif
 fi
 
-
 """
+
+    def bindir(): 
+        if opt_d.bindir_l:
+            return "%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
+                "%_bindir/"+file for file in opt_d.bindir_l
+                )+"\n"*2
+        else:
+            return ""
+
+# %defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)
+# %_bindir/%package_main
+# %_bindir/%package_main-{SUBPACKAGE}
+
+# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main-*.h
+# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main.h
+
+    def includedir(): 
+        if opt_d.includedir_l:
+            return "%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
+                "%_includedir/%PACKAGE/"+file for file in opt_d.includedir_l
+                )+"\n"*2
+        else:
+            return ""
+    
+#%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)
+#%_includedir/%PACKAGE/%package_main-*.h
+#%_includedir/%PACKAGE/%package_main.h
+
     template_of_sect_of_spec["files/subpkg"]="""\
 ### {sec_name}/{SUBPACKAGE}  ###
 %if %{lc}with {SUBPACKAGE}{rc}
 
 %files -n %PACKAGE-{SUBPACKAGE}
-
-%defattr(%__attr_x,%A68,%A68,%__attr_x)
-%_bindir/%package_main
-%_bindir/%package_main-{SUBPACKAGE}
-%defattr(%__attr_r,%A68,%A68,%__attr_x)
-# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main-*.h
-# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main.h
-%_includedir/%PACKAGE/%package_main-*.h
-%_includedir/%PACKAGE/%package_main.h
-
-%doc %_mandir/man?/*
-%doc %_docdir_pkg/*
-
+"""+(
+    bindir()+
+    includedir()
+)+"""
+ %doc %_mandir/man?/*
+ %doc %_docdir_pkg/*
+ 
 # add-license-file-here
 # pre a68g-3.1.9 was: #license LICENSE
 %license COPYING
@@ -977,7 +1000,7 @@ def print_autoconf_template(template_of_sect_of_subfile, req_d_of_subpkg_opt, co
             for cdh in subpkg_opt_d['confdefs.h.']['paragraph_0'] if "value" in cdh ) )
     
     if opt_d.PACKAGE_VERSION is not None: 
-        print("PACKAGE_VERSION:",PACKAGE_VERSION)
+        print("opt_d.PACKAGE_VERSION:",opt_d.PACKAGE_VERSION)
         confdefs["PACKAGE_VERSION"]=opt_d.PACKAGE_VERSION
 
     for subfile_name,template_of_sect in template_of_sect_of_subfile.items():
@@ -1642,7 +1665,7 @@ if __name__ == "__main__":
                     'FFLAGS': '-g -pie',
                     'FCFLAGS': '-g -pie',
                     'LD': 'ld', 'static_LDFLAGS': '-Wl,-static',
-                    'LDFLAGS': '-g -pie -L /usr/lib64/R/lib',
+                    'LDFLAGS': '-g -pie -L/usr/lib64/R/lib',
                     'core_tests': 'Core tests.',
                     'package_main': 'a68g',
                     'verbose_requires': False,
@@ -1699,8 +1722,8 @@ if __name__ == "__main__":
         # gcc: Supported emulations: elf_x86_64 elf32_x86_64 elf_i386 elf_iamcu i386linux elf_l1om elf_k1om i386pep i386pe
         LD="ld",
         static_LDFLAGS="-Wl,-static",
-        # -L /usr/lib64/R/lib is required for Suse15.3
-        LDFLAGS=optflags+" -L /usr/lib64/R/lib", # +" -shared",
+        # -L/usr/lib64/R/lib is required for Suse15.3
+        LDFLAGS=optflags+" -L/usr/lib64/R/lib", # +" -shared",
         # target="i686-all-linux-gnu",
         core_tests="Core tests.",
         package_main="a68g",
@@ -1715,7 +1738,15 @@ if __name__ == "__main__":
         source_input_dir=".",
         build_staging_dir=".",
         insert_headings=False,
+        bindir_l="%package_main %package_main-{SUBPACKAGE}".split(),
+        includedir_l="%package_main.h %package_main-*.h".split(),
     )
+
+# %_bindir/%package_main
+# %_bindir/%package_main-{SUBPACKAGE}
+# %_includedir/%PACKAGE/%package_main-*.h
+# %_includedir/%PACKAGE/%package_main.h
+
     """ Algol68g-2.8.4's 13 options:
         1. With hardware support for long modes
         2. With compilation support
