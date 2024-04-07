@@ -537,12 +537,12 @@ URL: {opt_d.DOCUMENTATION_PAGE}
 %default_with keep_scripts
 
 # various constants
-%define __attr_r 644
-%define __attr_x 755
+%define __attr_r 0644
+%define __attr_x 0755
 
 # prefer uid&gid=GNU
-%define BldUID root
-%define BldGID root
+%define PkgUID root
+%define PkgGID root
 
 # useful macros
 %define prelude(o:s:n:)  %{lc}?with_keep_scripts:ln -f "$0" `dirname "$0"`/rpmbuild-$USER-%-o*-%-s*-%-n*.sh{rc}
@@ -839,13 +839,13 @@ fi
 
     def bindir(): 
         if opt_d.bindir_l:
-            return "%defattr(%__attr_x,%__attr_x,%BldUID,%BldGID)\n"+"\n".join(
+            return "%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
                 "%_bindir/"+file for file in opt_d.bindir_l
                 )+"\n"*2
         else:
             return ""
 
-# %defattr(%__attr_x,%BldUID,%BldGID,%__attr_x)
+# %defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)
 # %_bindir/%package_main
 # %_bindir/%package_main-{SUBPACKAGE}
 
@@ -854,13 +854,13 @@ fi
 
     def includedir(): 
         if opt_d.includedir_l:
-            return "%defattr(%__attr_r,%__attr_x,%BldUID,%BldGID)\n"+"\n".join(
+            return "%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
                 "%_includedir/%PACKAGE"+file for file in opt_d.includedir_l
                 )+"\n"*2
         else:
             return ""
     
-#%defattr(%__attr_r,%BldUID,%BldGID,%__attr_x)
+#%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)
 #%_includedir/%PACKAGE/%package_main-*.h
 #%_includedir/%PACKAGE/%package_main.h
 
