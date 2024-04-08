@@ -841,7 +841,7 @@ fi
     def bin_l(): 
         if opt_d.bin_l:
             return "%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_bindir/"+file for file in opt_d.bin_l if file
+                "%_bindir/"+file for file in opt_d.bin_l if file and file != "None"
                 )+"\n"*2
         else:
             return ""
@@ -851,7 +851,7 @@ fi
     def include_l(): 
         if opt_d.include_l:
             return "%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_includedir/%PACKAGE/"+file for file in opt_d.include_l if file
+                "%_includedir/%PACKAGE/"+file for file in opt_d.include_l if file and file != "None"
                 )+"\n"*2
         else:
             return ""

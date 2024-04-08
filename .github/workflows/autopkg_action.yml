@@ -139,7 +139,7 @@ jobs:
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
               --package_main $CRJ_PRJ \
               --bin_l $CRJ_PRJ \
-              --include_l '""'
+              --include_l None
             ;;
           esac
 
