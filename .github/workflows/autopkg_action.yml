@@ -119,7 +119,11 @@ jobs:
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
-              --package_main a68g
+              --package_main a68g \
+              --bin_l a68g \
+              --bin_l a68g-full \
+              --include_l algol68g.h \
+              --include_l "algol68g-*.h"
             ;;
             (chess)
               qoutput CRJ_PKG_BLD_OPTIONS := \
@@ -133,7 +137,9 @@ jobs:
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main $CRJ_PRJ
+              --package_main $CRJ_PRJ \
+              --bin_l $CRJ_PRJ \
+              --include_l ""
             ;;
           esac
 
@@ -174,12 +180,12 @@ jobs:
         matrix_os_rel_mach:
 #          - ${{ github.event.inputs.WFDP_OS_REL_MACH || 'rhel9.3-x86_64' }}
           - rhel9.3-x86_64
-          - rocky9.3-aarch64
-          - debian11-aarch64
-          - raspbian12-armv7l
-          - ubuntu-latest
-          - ubuntu-20.04
-          - fedora38-x86_64
+          #- rocky9.3-aarch64
+          #- debian11-aarch64
+          #- raspbian12-armv7l
+          #- ubuntu-latest
+          #- ubuntu-20.04
+          #- fedora38-x86_64
           # - opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
 #        matrix_os_vm:
 #          - DOLLAR{{ github.event.inputs.WFDP_OS_VM || 'baremetal' }}
