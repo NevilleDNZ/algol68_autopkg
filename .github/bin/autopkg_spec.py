@@ -1733,7 +1733,7 @@ if __name__ == "__main__":
         source_input_dir=".",
         build_staging_dir=".",
         insert_headings=False,
-        bin_l="%package_main".split() #  %package_main-{SUBPACKAGE}".split(),
+        bin_l="%package_main".split(), #  %package_main-{SUBPACKAGE}".split(),
         include_l=[] # "%package_main.h %package_main-*.h".split(),
     )
 
