@@ -841,7 +841,7 @@ fi
     def bin_l(): 
         if opt_d.bin_l:
             return "%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_bindir/"+file for file in opt_d.bin_l if file
+                "%_bindir/"+file for file in opt_d.bin_l if file and file != "None"
                 )+"\n"*2
         else:
             return ""
@@ -851,7 +851,7 @@ fi
     def include_l(): 
         if opt_d.include_l:
             return "%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_includedir/%PACKAGE/"+file for file in opt_d.include_l if file
+                "%_includedir/%PACKAGE/"+file for file in opt_d.include_l if file and file != "None"
                 )+"\n"*2
         else:
             return ""
@@ -1726,21 +1726,17 @@ if __name__ == "__main__":
         so_l=(".so .so.0 .so.1 .so.2 .so.3 .so.4 .so.5 .so.6 .so.7 .so.8 .so.9 .so.10 .so.11 .so.0.0 .so.0.0.0 .a".split()),
         ignore_missing=True, # QQQ False
         avoid_automake_install="", # patch and touch ./configure so to avoid a (potentually tedious) automake/rebuild
-        sub_package_name="tiny full".split(),
+        sub_package_name=[], # "tiny full".split(),
         merge_extra_tool_l=[],
         # package_builder=package_builder,
         # local_package_manager=local_package_manager,
         source_input_dir=".",
         build_staging_dir=".",
         insert_headings=False,
-        bin_l="%package_main %package_main-{SUBPACKAGE}".split(),
-        include_l="%package_main.h %package_main-*.h".split(),
+        bin_l="%package_main".split() #  %package_main-{SUBPACKAGE}".split(),
+        include_l=[] # "%package_main.h %package_main-*.h".split(),
     )
 
-# %_bindir/%package_main
-# %_bindir/%package_main-{SUBPACKAGE}
-# %_includedir/%PACKAGE/%package_main-*.h
-# %_includedir/%PACKAGE/%package_main.h
 
     """ Algol68g-2.8.4's 13 options:
         1. With hardware support for long modes
