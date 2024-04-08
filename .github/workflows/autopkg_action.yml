@@ -122,8 +122,8 @@ jobs:
               --package_main a68g \
               --bin_l a68g \
               --bin_l a68g-full \
-              --include_l algol68g.h \
-              --include_l "algol68g-*.h"
+              --include_l a68g.h \
+              --include_l "a68g-*.h"
             ;;
             (chess)
               qoutput CRJ_PKG_BLD_OPTIONS := \
