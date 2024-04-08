@@ -838,25 +838,20 @@ fi
 
 """
 
-    def bindir(): 
-        if opt_d.bindir_l:
+    def bin_l(): 
+        if opt_d.bin_l:
             return "%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_bindir/"+file for file in opt_d.bindir_l
+                "%_bindir/"+file for file in opt_d.bin_l
                 )+"\n"*2
         else:
             return ""
 
-# %defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)
-# %_bindir/%package_main
-# %_bindir/%package_main-{SUBPACKAGE}
+# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main-*.h,pc_package_main.h
 
-# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main-*.h
-# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main.h
-
-    def includedir(): 
-        if opt_d.includedir_l:
+    def include_l(): 
+        if opt_d.include_l:
             return "%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_includedir/%PACKAGE/"+file for file in opt_d.includedir_l
+                "%_includedir/%PACKAGE/"+file for file in opt_d.include_l
                 )+"\n"*2
         else:
             return ""
@@ -871,8 +866,8 @@ fi
 
 %files -n %PACKAGE-{SUBPACKAGE}
 """+(
-    bindir()+
-    includedir()
+    bin_l()+
+    include_l()
 )+"""
  %doc %_mandir/man?/*
  %doc %_docdir_pkg/*
@@ -1738,8 +1733,8 @@ if __name__ == "__main__":
         source_input_dir=".",
         build_staging_dir=".",
         insert_headings=False,
-        bindir_l="%package_main %package_main-{SUBPACKAGE}".split(),
-        includedir_l="%package_main.h %package_main-*.h".split(),
+        bin_l="%package_main %package_main-{SUBPACKAGE}".split(),
+        include_l="%package_main.h %package_main-*.h".split(),
     )
 
 # %_bindir/%package_main
