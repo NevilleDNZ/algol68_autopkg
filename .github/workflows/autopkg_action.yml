@@ -186,6 +186,7 @@ jobs:
           # - ubuntu-latest
           # - ubuntu-20.04
           # - fedora38-x86_64
+          # - fedora39-x86_64
           # - opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
 #        matrix_os_vm:
 #          - DOLLAR{{ github.event.inputs.WFDP_OS_VM || 'baremetal' }}

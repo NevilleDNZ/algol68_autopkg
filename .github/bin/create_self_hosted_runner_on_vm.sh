@@ -1,10 +1,9 @@
 #!/bin/bash
 
 #CRR_REPO="https://github.com/NevilleDNZ-downstream/algol68g-release-builder-downstream"
-CRR_REPO="https://github.com/NevilleDNZ/algol68-autopkg"
-CRR_REPO="https://github.com/NevilleDNZ-downstream/algol68g-release-builder-orphan"
-echo firefox "$CRR_REPO/settings/actions/runners/new"
-CRR_TOKEN='BANqqqqqqqqqqqqqqqqqqqqqqqqqqq'
+CRR_REPO_URL="https://github.com"
+CRR_REPO="$CRR_REPO_URL/NevilleDNZ/algol68-autopkg"
+CRR_REPO="$CRR_REPO_URL/NevilleDNZ-downstream/algol68-autopkg-downstream"
 
 CRR_VM=qemu
 CRR_VM=kvm
@@ -13,10 +12,14 @@ CRR_VM=docker
 CRR_VM=xen
 CRR_VM=vbox
 
+CRR_AR_DIR=AR
+
 TODO="Under construction..."
 
 TRUE="TrU"
 FALSE=""
+q="'"
+qq='"'
 
 WS0="[[:space:]]*"
 WS="[[:space:]]\+"
@@ -55,8 +58,16 @@ WARN(){
 
 TRACE(){
     trace_argv="$(echo_Q "$@")"
-    echo_Q TRACE: "$@"
+    echo_Q TRACE: "$@" 1>&2
     "$@"
+    return "$?"
+}
+
+ASSERT(){
+    trace_argv="$(echo_Q "$@")"
+    echo_Q TRACE: "$@" 1>&2
+    "$@" || RAISE
+    return "$?"
 }
 
 SKIP(){
@@ -83,6 +94,51 @@ NEED(){
     SUDO dnf install -y "$@"
 }
 
+cows_come_home=999
+
+WAIT_WHILE(){
+    for((i=0; i<$cows_come_home; i++)); do
+        TRACE "$@" || return "$?"
+        sleep 6
+    done
+    return 0
+}
+
+WAIT_UNTIL(){
+    for((i=0; i<$cows_come_home; i++)); do
+        TRACE "$@" && return $?
+        rc="$?"
+        sleep 6
+    done
+    return "$rc"
+}
+
+NOT(){
+    "$@"
+    case "$?" in
+        (0)return 1;;
+        (*)return 0;;
+    esac
+}
+
+ip_up_host(){
+    ping -c 1 -w 100 $1
+}
+
+is_open_host_port(){
+    echo > /dev/tcp/$1/$2
+}
+
+Is_up_vm_nic(){
+    ip=`get_ip_of_vm_nic $1`
+    ip_up_host $ip
+}
+
+Is_open_vm_port(){
+    ip=`get_ip_of_vm_nic $1`
+    is_open_host_port $ip $2
+}
+
 CRR_ISO_LABEL="OEMDRV" # required only for RHEL? CIDATA for ubuntu/cloud-init
 
 # -Leap-15.5-NET-x86_64-Build491.1-Media
@@ -91,12 +147,70 @@ normalise_hostname(){
         s?^.*/??;
         s/?.*$//;
         s/[.]iso//;
-        s/-\(\(dvd\|DVD\)-*[0-9]*\|boot\|minimal\|legacy\|desktop\|netinst\|live\|server\|NET\|Build[^-]*\|Media\|RELEASE\)//g;
+        s/-\(\(dvd\|DVD\)\(-*[0-9][0-9]*\)*\|disc[0-9]\|live\|boot\|minimal\|legacy\|desktop\|netinst\|live\|server\|NET\|Build[^-]*\|Media\|RELEASE\)//g;
         s/\([a-zA-Z]\)/\L\1/g;
         s/\([a-z]\)-\([0-9]\)/\1\2/g;
         s/[^a-z0-9]/-/g;
     '
 }
+
+review_hostnames(){
+    for iso in ~/Downloads/*.iso; do
+        n=`echo $iso | normalise_hostname`; echo -n $n ................; basename $iso
+    done
+    exit
+}
+
+
+OPT_v=""
+
+# Function to find the IP address associated with a VM's NIC MAC address # by ChatGPT
+get_ip_of_vm_nic() {
+    local vm_name="$1"
+    local nic_number="$2"
+    #ASSERT [ -n "$vm_name" ]
+    #ASSERT [ -n "$nic_number" ]
+    local subnet_l="192.168.56.174/24" # Define your subnet list here
+
+    # Retrieve the MAC address for the specified NIC of the VM
+    mac_address=$(VBoxManage showvminfo "$vm_name" --machinereadable | grep "macaddress$nic_number" | cut -d'"' -f2 | tr '[:upper:]' '[:lower:]')
+
+    if [[ -n "$mac_address" ]]; then
+        [ -n "$OPT_v" ] && echo "MAC address for VM $vm_name is: $mac_address"
+        # echo $mac_address
+    else
+        [ -n "$OPT_v" ] && echo "No MAC address found for VM $vm_name." 1>&2
+        return 1
+    fi
+
+    # Format the MAC address to standard colon-separated format
+    mac_address=$(echo "$mac_address" | sed 's/\(..\)/\1:/g;s/:$//')
+
+    [ -n "$OPT_v" ] && echo "Scanning for MAC address $mac_address in subnet $subnet_l..." 1>&2
+
+    # Use ip neigh to find the IP address associated with the MAC address
+    ip_address=$(ip neigh | awk "/$mac_address/"'{print $1}')
+    if [ "$ip_address" == "" ]; then
+    # Scan the subnet with nmap to populate the ARP table
+        for subnet in $subnet_l; do
+            nmap -sn $subnet > /dev/null 2>&1
+        done
+        ip_address=$(ip neigh | awk "/$mac_address/"'{print $1}')
+    fi
+
+    if [[ -n "$ip_address" ]]; then
+        [ -n "$OPT_v" ] && echo "IP address for MAC $mac_address is: $ip_address"
+        echo $ip_address
+    else
+        [ -n "$OPT_v" ] && echo "No IP address found for MAC $mac_address." 1>&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Example usage:
+# get_ip_of_vm_nic "VM name" 1
 
 local_downloads="$HOME/Downloads"
 local_tmpdir="$local_downloads/tmp"
@@ -122,7 +236,7 @@ gen_pw (){
     # the next two lines are hint, actual PW differs...
     SALT=$(openssl rand -base64 12)
     c=`echo -n "VBOX-PW-salted" | openssl passwd -6 -salt "$SALT" -stdin` # Fake PW
-    ToDo: Add 
+    ToDo: Add
     . ~/.ssh/create_self_hosted_runner_on_vm.passwords # get ROOT_PW_IC and ROOT_PW_PT
 }
 
@@ -147,7 +261,8 @@ timezone $CRR_timezone --utc
 rootpw --iscrypted $ROOT_PW_IC
 #rootpw --plaintext $ROOT_PW_PT
 
-reboot
+#reboot
+#reboot --eject
 cdrom
 bootloader --append="rhgb quiet crashkernel=1G-4G:192M,4G-64G:256M,64G-:512M"
 zerombr
@@ -162,7 +277,7 @@ firewall --enabled --ssh
 
 # Reboot after installation
 # Note! Not sure exactly when the --eject option was added. Need to find out and make it optional.
-reboot --eject
+# reboot --eject
 
 #%packages
 #@^gnome-desktop-environment
@@ -186,7 +301,9 @@ sleep 6
 /bin/echo "Shutdown will occur in 6 seconds... Goodbye!"
 /bin/eject
 /bin/sleep 6 # 0
-#/sbin/shutdown -h nowinit 0
+/sbin/shutdown -h now
+/bin/sleep 6 # 0
+init 0
 %end
 
 EOF
@@ -1507,7 +1624,7 @@ create_install_script (){
         ;;
         (debian-amd64|debian-like-amd64)
             CRR_preseed_Installer="$TMP_WORKDIR_prep_iso/preseed.cfg" # preseed
-            #TRACE chmod u+w "$CRR_preseed_Installer" || RAISE
+            #ASSERT chmod u+w "$CRR_preseed_Installer"
             create_preseed
 
         # update the checksum .. ubuntu only?
@@ -1528,7 +1645,7 @@ create_install_script (){
             case autoinstall in
                 (preseed) # ToDo/dud
                     CRR_preseed_Installer="$TMP_WORKDIR_prep_iso/preseed/ubuntu.seed" # preseed
-                    TRACE chmod u+w "$CRR_preseed_Installer" || RAISE
+                    ASSERT chmod u+w "$CRR_preseed_Installer"
                     create_preseed
 
                 # update the checksum
@@ -2497,8 +2614,8 @@ autoinstall:
 EOF
 }
 
-HELP_get_iso="$TODO"
-get_iso (){
+HELP_get_upstream_os_iso="$TODO"
+get_upstream_os_iso (){
     if [ ! -f "$CRR_local_iso" ]; then
         TRACE curl -o "$CRR_local_iso" "$CRR_repo_iso"
     fi
@@ -2509,7 +2626,7 @@ get_iso (){
         target_cs=`cat "$CRR_local_iso_checksum"`
         candidate_cs=`$checksum "$CRR_local_iso"`
         if [ "$candidate_cs" != "$target_cs" ]; then
-            RAISE "$CRR_local_iso" 'bad checksum' "$candidate_cs" != "$target_cs"]
+            RAISE "$CRR_local_iso" 'bad checksum' "$candidate_cs" != "$target_cs"
         fi
     fi
 }
@@ -2536,7 +2653,7 @@ create_custom_iso (){
 # Hat Enterprise Linux, and that you have created a working Kickstart file.
 
 # Mount the ISO image you have downloaded:
-TRACE mkdir -p "$MNT_ISO" || RAISE
+ASSERT mkdir -p "$MNT_ISO"
 #SUDO mount -t iso9660 -o ro,uid=$CRR_UID,gid=$CRR_GID "$IMAGE_ISO" "$MNT_ISO" || WARN
 SUDO mount -o ro,uid=$CRR_UID,gid=$CRR_GID "$IMAGE_ISO" "$MNT_ISO" || WARN
 
@@ -2546,11 +2663,11 @@ if [ -d "$TMP_WORKDIR_prep_iso" ]; then # debugging
     SUDO rm -Rf "$TMP_WORKDIR_prep_iso" || NOTE
 fi
 
-TRACE mkdir -p "$TMP_WORKDIR_prep_iso" || RAISE
+ASSERT mkdir -p "$TMP_WORKDIR_prep_iso"
 
 # need to sudo/chown in cases, a file is being copied from a "ro" CDROM directory? I'm confused!
 
-TRACE cp -RT "$MNT_ISO/." "$TMP_WORKDIR_prep_iso" || RAISE # added ../.
+ASSERT cp -RT "$MNT_ISO/." "$TMP_WORKDIR_prep_iso"  # added ../.
 #( cd "$MNT_ISO"; find . -type f -print0 | tar --null -T - -cf - ) | ( cd "$TMP_WORKDIR_prep_iso"; tar -xvf - )
 #SUDO chown -Rf "$USER" "$TMP_WORKDIR_prep_iso"
 #chmod -Rf u+w "$TMP_WORKDIR_prep_iso"
@@ -2564,7 +2681,7 @@ TRACE rmdir "$MNT_ISO" || WARN
 # working directory. Add your Kickstart file (ks.cfg) into the iso/
 # directory:
 
-# TRACE cp "$CRR_kickstart_Installer" "$TMP_WORKDIR_prep_iso" || RAISE
+# ASSERT cp "$CRR_kickstart_Installer" "$TMP_WORKDIR_prep_iso"
     create_install_script
 
 # Open the isolinux/isolinux.cfg configuration file inside the iso/
@@ -2580,7 +2697,7 @@ CD "$TMP_WORKDIR_prep_iso" || RAISE
 
 # The -A option is used to specify the Application Identifier.
 # The -volset option is used to specify the Volume Set Name of the ISO image.
-#TRACE genisoimage -U -r -v -T -J -joliet-long -V "$CRR_rel" -volset "$CRR_rel" -A "$CRR_rel" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot -o "$CUSTOM_ISO" .  || RAISE
+#ASSERT genisoimage -U -r -v -T -J -joliet-long -V "$CRR_rel" -volset "$CRR_rel" -A "$CRR_rel" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot -o "$CUSTOM_ISO" .
 
 case "$CRR_OS" in
     (rhel-x86_64|rocky-x86_64|centos-x86_64|rhel-like-x86_64)
@@ -2620,7 +2737,7 @@ case "$CRR_OS" in
         CRR_BOOT_CAT="-c isolinux/boot.cat"
         CRR_BOOT_LINUX="-b isolinux/isolinux.bin"
         CRR_EFIBOOT="-e EFI/boot/bootx64.efi"
-        TRACE chmod u+w isolinux/isolinux.bin || RAISE
+        ASSERT chmod u+w isolinux/isolinux.bin
     ;;
     (ubuntu-amd64|ubuntu-like-amd64)
         CRR_BOOT_CAT="-c boot.catalog"
@@ -2634,9 +2751,9 @@ case "$CRR_OS" in
     ;;
 esac
 
-TRACE genisoimage -U -r -v -T -J -joliet-long -input-charset utf-8 -V "$CRR_ISO_LABEL" -volset "$CRR_rel" -A "$CRR_rel" $CRR_BOOT_LINUX $CRR_BOOT_CAT -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot $CRR_EFIBOOT -no-emul-boot -o "$CUSTOM_ISO" .  || RAISE
+ASSERT genisoimage -U -r -v -T -J -joliet-long -input-charset utf-8 -V "$CRR_ISO_LABEL" -volset "$CRR_rel" -A "$CRR_rel" $CRR_BOOT_LINUX $CRR_BOOT_CAT -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot $CRR_EFIBOOT -no-emul-boot -o "$CUSTOM_ISO" .
 
-# was: TRACE genisoimage -U -r -v -T -J -joliet-long -V "$CRR_ISO_LABEL" -volset "$CRR_rel" -A "$CRR_rel" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot -o "$CUSTOM_ISO" .  || RAISE
+# was: ASSERT genisoimage -U -r -v -T -J -joliet-long -V "$CRR_ISO_LABEL" -volset "$CRR_rel" -A "$CRR_rel" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot -o "$CUSTOM_ISO" .
 
 CD -
 
@@ -2644,7 +2761,7 @@ CD -
 # dumpet -i "$CUSTOM_ISO"
 
 if [ ! "$OPT_debug" ]; then
-    TRACE rm -rf "$TMP_WORKDIR_prep_iso" || RAISE
+    ASSERT rm -rf "$TMP_WORKDIR_prep_iso"
 fi
 
 # This comand will create a file named CUSTOM_ISO.iso in your working directory
@@ -2658,7 +2775,7 @@ fi
 
 # Implant a md5 checksum into the new ISO image:
 
-TRACE implantisomd5 "$CUSTOM_ISO" || RAISE
+ASSERT implantisomd5 "$CUSTOM_ISO"
 
 # After you finish the above procedure, your new image is ready to be
 # turned into boot media. Refer to Chapter 2, Making Media for instructions.
@@ -2681,8 +2798,8 @@ destroy_custom_iso (){
     TRACE rm "$CUSTOM_ISO"
 }
 
-HELP_create_vm="$TODO"
-create_vm (){
+HELP_create_custom_vm="$TODO"
+create_custom_vm (){
 # Define variables
     HDD_SIZE=64000  # Size in MB (64GB)
     RAM_SIZE=2048   # Size in MB (2GB)
@@ -2759,8 +2876,8 @@ start_vm (){
     TRACE VBoxManage startvm "$VM_NAME"
 }
 
-HELP_restart_vm="shutdown_vm, remove_DVD, start_vm - so as not to reinstall OS"
-restart_vm (){
+HELP_installation_phase_two="shutdown_vm, remove_DVD, start_vm - so as not to reinstall OS"
+installation_phase_two (){
     # start the VM
     shutdown_vm
     #TRACE VBoxManage storageattach "$VM_NAME" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "$CRR_local_custom_iso"
@@ -2774,83 +2891,129 @@ shutdown_vm (){
     TRACE VBoxManage controlvm "$VM_NAME" acpipowerbutton
 }
 
-CRR_IR_LOG="install_runner.log"
+CRR_IR_LOG="AR_prep_VM_inst.log"
 OPT_ssh="-i $HOME/.ssh/$CRR_PTEKEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=no" # ToDo: we know the IP address locally
 
-HELP_install_runner="$TODO"
-install_runner (){
+HELP_AR_prep_VM_inst="$TODO"
+AR_prep_VM_inst (){
+    VM_NAME="$1"
+    CRR_IP="$2"
     # https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners#prerequisiteshttps://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners#prerequisites
     # $CRR_REPO/settings/actions/runners/new
-    # install_runner on the VM
+    # AR_prep_VM_inst on the VM
 
-    CRR_IP="$(get_vm_ip $VM_NAME)"
+    # CRR_IP="$(get_ip_of_vm_nic $VM_NAME $CRR_NIC_NUM)"
 
 # Note: on ubuntu, the default login shell is /bin/sh, not bash.
-    cat << EOF | tee "$CRR_IR_LOG" | ssh $OPT_ssh "root@$CRR_IP"
+    ssh $OPT_ssh "root@$CRR_IP" "
         dnf install -y tar # ToDo Needed for RHEL-minimum
-#        useradd -Um -u $CRR_UID -G adm,wheel -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder' # && passwd '$CRR_remote_builder'
-        useradd -Um -u $CRR_UID -G adm -s /usr/bin/bash -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder' # && passwd '$CRR_remote_builder'
-        cp -rp ~/.ssh ~$CRR_remote_builder/
-        chown -R "$CRR_remote_builder" ~$CRR_remote_builder/.ssh
-        ALLOW_SUDO="$CRR_remote_builder ALL=(ALL:ALL) NOPASSWD: ALL"
-        grep -q "\$ALLOW_SUDO" "/etc/sudoers.d/$CRR_remote_builder" ||
-            echo "\$ALLOW_SUDO" >> "/etc/sudoers.d/$CRR_remote_builder"
-        chmod go-rwx "/etc/sudoers.d/$CRR_remote_builder"
-EOF
+#        useradd -Um -u $CRR_UID -G adm,wheel -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder' 
+        useradd -Um -u $CRR_UID -G adm -s /usr/bin/bash -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder'
+        cp -rp ~root/.ssh ~$CRR_remote_builder/
+        chown -R '$CRR_remote_builder' ~$CRR_remote_builder/.ssh
+        ALLOW_SUDO='$CRR_remote_builder ALL=(ALL:ALL) NOPASSWD: ALL'
+        grep -q $qq\$ALLOW_SUDO$qq '/etc/sudoers.d/$CRR_remote_builder' ||
+            echo $qq\$ALLOW_SUDO$qq >> '/etc/sudoers.d/$CRR_remote_builder'
+        chmod go-rwx '/etc/sudoers.d/$CRR_remote_builder'
+      "
 
-    CRR_RUNNER_VER=2.311.0
-    CRR_RUNNER=actions-runner-linux-x64-$CRR_RUNNER_VER.tar.gz
-    CRR_RUNNER_CRC=29fc8cf2dab4c195bb147384e7e2c94cfd4d4022c793b346a6175435265aa278
+    scp -p $OPT_ssh ~/bin/runner_mgr.sh "$CRR_remote_builder@$CRR_IP:"
 
-    if [ ! -f "$local_downloads/$CRR_RUNNER" ]; then
-        curl -o $CRR_RUNNER -L https://github.com/actions/runner/releases/download/v$CRR_RUNNER_VER/$CRR_RUNNER
-        echo "$CRR_RUNNER_CRC  $CRR_RUNNER" | shasum -a 256 -c
-    fi
-
-    scp -p $OPT_ssh "$local_downloads/$CRR_RUNNER" "$CRR_remote_builder@$CRR_IP:"
-
-    cat << EOF | tee -a "$CRR_IR_LOG" | ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP"
-    # RHEL-minimal, TRY: sha256sum -c instead of: shasum -a 256 -c
-        if [ ! -f "$CRR_RUNNER" ]; then
-            curl -o "$CRR_RUNNER" -L https://github.com/actions/runner/releases/download/v$CRR_RUNNER_VER/$CRR_RUNNER
-            echo "$CRR_RUNNER_CRC  $CRR_RUNNER" | shasum -a 256 -c
-        fi
-        if mkdir -p actions-runner && cd actions-runner; then
-            tar xzf ../$CRR_RUNNER
-        fi
-EOF
-
-    cat << EOF | tee -a "$CRR_IR_LOG" | ssh  $OPT_ssh "root@$CRR_IP"
-        if cd ~$CRR_remote_builder/actions-runner; then
-            ./bin/installdependencies.sh
-        fi
-EOF
-    #firefox "$CRR_REPO/settings/actions/runners/new"
-    #echo -p CRR_TOKEN: $CRR_TOKEN
-
-    echo_Q ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP"
-    echo_Q cd actions-runner "&&" ./config.sh --unattended --labels "$CRR_LABELS" --replace Y --url $CRR_REPO --token $CRR_TOKEN
-    cat << EOF | tee -a "$CRR_IR_LOG" | ssh  $OPT_ssh "$CRR_remote_builder@$CRR_IP"
-        if cd actions-runner; then
-        # try1
-        #    ./config.sh --url $CRR_REPO --CRR_TOKEN BANqqqqqqqqqqqqqqqqqqqqqqqqqqq
-        # DELL
-        #    ./config.sh --url $CRR_REPO --CRR_TOKEN BANqqqqqqqqqqqqqqqqqqqqqqqqqqq
-        # Rocky9-3
-        #    ./config.sh --url $CRR_REPO --CRR_TOKEN BANqqqqqqqqqqqqqqqqqqqqqqqqqqq
-        #    ./config.sh --url $CRR_REPO --CRR_TOKEN  BANqqqqqqqqqqqqqqqqqqqqqqqqqqq
-            ./config.sh --unattended --labels "$CRR_LABELS" --replace Y --url $CRR_REPO --token $CRR_TOKEN
-        fi
-EOF
+    ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+        mkdir -p $CRR_AR_DIR && cd $CRR_AR_DIR &&
+        mv ../runner_mgr.sh . &&
+        ./runner_mgr.sh download &&
+        ./runner_mgr.sh installdependencies
+        true
+    "
 }
 
 
-HELP_remove_runner="$TODO"
-remove_runner (){
-    true # ToDo
-    # https://github.com/NevilleDNZ-downstream/algol68g-release-builder-downstream/settings/actions/runners/27
-    #// Remove the runner
-    # ./config.sh remove --token BANqqqqqqqqqqqqqqqqqqqqqqqqqqq
+HELP_AR_configure="$TODO"
+AR_configure (){
+
+    VM_NAME="$1"
+    CRR_IP="$2"
+    repo="$3"
+    token="$4"
+
+    for repo in "$CRR_REPO_LIST"; do
+        echo echo firefox "$CRR_REPO_URL/$repo/settings/actions/runners/new"
+
+        echo ./runner_mgr.sh configure "$repo" "$VM_NAME" $token
+
+        ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+            mkdir -p $CRR_AR_DIR && cd $CRR_AR_DIR &&
+               ./runner_mgr.sh configure '$repo' '$VM_NAME' $token
+            "
+    done
+}
+
+HELP_AR_run="$TODO"
+AR_run (){
+    VM_NAME="$1"
+    CRR_IP="$2"
+    repo="$3"
+
+    for repo in "$CRR_REPO_LIST"; do
+        set -x
+        if ssh $OPT_ssh -n -f "$CRR_remote_builder@$CRR_IP" "
+            cd $CRR_AR_DIR && {
+                # for((i=1; i<36; i++)); do echo -n \$i.; sleep 1; done &
+                nohup ./runner_mgr.sh run '$repo' '$VM_NAME' & 
+                for((j=36; j>0; j--)); do echo -n \$j.; sleep 1; done
+            }
+        "; then
+            echo OK: "nohup ./runner_mgr.sh run '$repo' '$VM_NAME'"
+        else
+            echo Huh: "nohup ./runner_mgr.sh run '$repo' '$VM_NAME'"
+        fi
+    done
+}
+
+HELP_AR_kill="$TODO"
+AR_kill (){
+    VM_NAME="$1"
+    CRR_IP="$2"
+    repo="$3"
+
+    for repo in "$CRR_REPO_LIST"; do
+        ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+            cd $CRR_AR_DIR &&
+            exec ./runner_mgr.sh kill '$repo' '$VM_NAME'
+        "
+    done
+}
+
+HELP_AR_status="$TODO"
+AR_status (){
+    VM_NAME="$1"
+    CRR_IP="$2"
+    repo="$3"
+
+    for repo in "$CRR_REPO_LIST"; do
+        ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+            cd $CRR_AR_DIR &&
+            exec ./runner_mgr.sh status '$repo' '$VM_NAME'
+        "
+        true
+    done
+}
+
+HELP_AR_remove="$TODO"
+AR_remove (){
+    VM_NAME="$1"
+    CRR_IP="$2"
+    repo="$3"
+    token="$4"
+    for repo in "$CRR_REPO_LIST"; do
+        echo ./runner_mgr.sh remove "$repo" "$VM_NAME"
+
+        ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+            cd $CRR_AR_DIR &&
+            ./runner_mgr.sh remove '$repo' '$VM_NAME' $token
+            " 
+    done
 }
 
 HELP_destroy_vm="$TODO"
@@ -2877,16 +3040,16 @@ CORE COMMANDS
     modify_kickstart_grub_isolinux_cfg - $HELP_modify_kickstart_grub_isolinux_cfg
     create_preseed - $HELP_create_preseed
     create_autoinstall - $HELP_create_autoinstall
-    get_iso - $HELP_get_iso
+    get_upstream_os_iso - $HELP_get_upstream_os_iso
     create_custom_iso - $HELP_create_custom_iso
     destroy_custom_iso - $HELP_destroy_custom_iso
-    create_vm - $HELP_create_vm
+    create_custom_vm - $HELP_create_custom_vm
     snapshot_vm - $HELP_snapshot_vm
     clone_vm - $HELP_clone_vm
     start_vm - $HELP_start_vm
-    restart_vm - $HELP_restart_vm
+    installation_phase_two - $HELP_installation_phase_two
     shutdown_vm - $HELP_shutdown_vm
-    install_runner - $HELP_install_runner
+    AR_prep_VM_inst - $HELP_configure_runner
     destroy_vm - $HELP_destroy_vm
     help - $HELP_help
 EOF
@@ -3008,6 +3171,8 @@ EOF
             CRR_inst_guide='https://fedoraproject.org/workstation/download'
             CRR_repo_iso="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_machine/iso/Fedora-Everything-netinst-$CRR_machine-$CRR_version.iso"
             CRR_repo_iso="https://gsl-syd.mm.fcix.net/fedora/linux/releases/$CRR_ver/Server/$CRR_machine/iso/Fedora-Server-dvd-$CRR_machine-$CRR_version.iso"
+            #             https://ap.edge.kernel.org/fedora/releases/test/40_Beta/Server/x86_64/iso/Fedora-Server-netinst-x86_64-40_Beta-1.10.iso
+            #             https://torrent.fedoraproject.org/torrents/Fedora-Server-dvd-x86_64-40_Beta.torrent
             CRR_iso_size='?'
             CRR_repo_iso_checksum="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_machine/iso/Fedora-Everything-$CRR_version-$CRR_machine-CHECKSUM"
             checksum="sha256sum --ignore-missing -c"
@@ -3124,15 +3289,15 @@ EOF
         (freebsd-amd64)
             CRR_machine="amd64"
             CRR_machine_l="amd64 i386 powerpc powerpc64 powerpc64le powerpcspe armv7 aarch64 riscv64"
-            CRR_ver=14
-            CRR_version="$CRR_ver.0"
-            CRR_inst_guide='https://www.freebsd.org/where'
-            CRR_repo_iso="https://download.freebsd.org/releases/$CRR_machine/$CRR_machine64/ISO-IMAGES/$CRR_version/FreeBSD-$CRR_version-RELEASE-$CRR_machine-dvd1.iso"
-            CRR_iso_size='?'
-            CRR_repo_iso_checksum="https://download.freebsd.org/releases/$CRR_machine/$CRR_machine64/ISO-IMAGES/$CRR_version/CHECKSUM.SHA256-FreeBSD-$CRR_version-RELEASE-$CRR_machine"
-            checksum="sha256sum --ignore-missing -c"
+            CRR_ver=14;
+            CRR_version="$CRR_ver.0";
+            CRR_inst_guide='https://www.freebsd.org/where';
+            CRR_repo_iso="https://download.freebsd.org/releases/$CRR_machine/$CRR_machine64/ISO-IMAGES/$CRR_version/FreeBSD-$CRR_version-RELEASE-$CRR_machine-dvd1.iso";
+            CRR_iso_size='?';
+            CRR_repo_iso_checksum="https://download.freebsd.org/releases/$CRR_machine/$CRR_machine64/ISO-IMAGES/$CRR_version/CHECKSUM.SHA256-FreeBSD-$CRR_version-RELEASE-$CRR_machine";
+            checksum="sha256sum --ignore-missing -c";
             CRR_type='NetBSD_64' # ToDo
-            CRR_rel="NetBSD-$CRR_version"
+            CRR_rel="NetBSD-$CRR_version";
             CRR_desc="NetBSD Unix $CRR_version" # ToDo
             CRR_family='NetBSD Unix' # ToDo
         ;;
@@ -3158,38 +3323,22 @@ EOF
     VM_NAME="$CRR_hostname"
 }
 
-build_target_vm (){
-    get_iso
-    if true; then
-        create_custom_iso # now with create_install_script;
-        create_vm
-        # shutdown_vm # debugging
-        start_vm
-        # restart_vm # umount DVD
-    fi
-    # install_runner
-    # destroy_vm
-}
-
 # Defects:
-# Install
-#
-# Root access
-#
-#
+# Install?
+# Root access?
 
 ARG_L="
 O/rocky-x86_64      +ssh_root -enter-to-install .cdrom-eject .runner
 O/rhel-x86_64       +ssh_root -enter-to-install .cdrom-eject .runner
 O/centos-x86_64     +ssh_root -enter-to-install .cdrom-eject .runner
-O/fedora-x86_64     +ssh_root +enter-to-install -cdrom-eject .runner
-d/ubuntu-amd64      +ssh_root -enter-to-install .cdrom-eject .runner
+d/fedora-x86_64     +ssh_root +enter-to-install -cdrom-eject .runner
+s/ubuntu-amd64      +ssh_root -enter-to-install .cdrom-eject .runner
 O/debian-amd64      +ssh_root -enter-to-install +cdrom-eject .runner
 O/opensuse-x86_64   +ssh_root                   -cdrom-eject .runner
 O/freebsd-amd64     -ssh_root -enter-to-install .cdrom-eject .runner
 "
 
-get_vm_ip (){
+depr_get_vm_ip (){
     # Extract MAC address of the VM
     re_mac="$(VBoxManage showvminfo "$1" --machinereadable |
         sed '/^macaddress[0-9]*=/!d;
@@ -3210,7 +3359,7 @@ fi
 
 CRR_OS_L=""
 
-for ARG in $ARG_L; do
+for ARG in "$@"; do
     case "$ARG" in
         (--help)help;;
         (-*|+*|/*|.*)false;; # -/bad; +/good, ./unknown
@@ -3225,15 +3374,112 @@ for ARG in $ARG_L; do
     esac
 done
 
-for CRR_OS in $CRR_OS_L; do
-    setenv_target_vm
-    # build_target_vm
-    #shutdown_vm
-    #snapshot_vm vanilla
-    #restart_vm
-    install_runner
-    # destroy_vm
-    true
-done
+CRR_NIC_NUM=2
+CRR_SSH_PORT=22
+
+is_vm_started(){
+    local vm="$1"
+    local nic="$2"
+    get_ip_of_vm_nic "$vm" "$nic" &&
+        is_open_host_port "$ip_address" "$CRR_SSH_PORT" # &&
+            # ssh $OPT_ssh "root@$ip_address" hostname
+}
+
+
+is_vm_ssh_started(){
+    local vm="$1"
+    local nic="$2"
+    get_ip_of_vm_nic "$vm" "$nic" &&
+        ip_up_host "$ip_address" &&
+          is_open_host_port "$ip_address" "$CRR_SSH_PORT" # &&
+              ssh $OPT_ssh "root@$ip_address" hostname
+}
+
+is_vm_pingable(){
+    local vm="$1"
+    local nic="$2"
+    get_ip_of_vm_nic "$vm" "$nic" &&
+        ip_up_host "$ip_address"
+        #is_open_host_port "$ip_address" "$CRR_SSH_PORT" # &&
+        #    ssh $OPT_ssh "root@$ip_address" hostname
+}
+
+is_vm_stopped(){
+    local vm="$1"
+    local nic="$2"
+    NOT is_vm_started "$vm" "$nic"
+}
+
+build_all_custom_isos_and_vms(){
+    for CRR_OS in $CRR_OS_L; do
+        setenv_target_vm
+        get_upstream_os_iso
+        create_custom_iso # now with create_install_script;
+        create_custom_vm
+    done
+}
+
+snapshot_all_vms(){
+    for CRR_OS in $CRR_OS_L; do
+        setenv_target_vm
+        if is_vm_started "$CRR_hostname" "$CRR_NIC_NUM"; then 
+            shutdown_vm; 
+        fi
+        # WAIT_UNTIL is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM" &&         
+        WAIT_WHILE is_vm_pingable "$CRR_hostname" "$CRR_NIC_NUM" || {
+            sleep 6
+            ASSERT VBoxManage storageattach "$VM_NAME" --storagectl 'IDE Controller' --port 0 --device 0 --type dvddrive --medium none
+            sleep 6
+            snapshot_vm vanilla && sleep 12
+        }
+    done
+}
+
+run_on_each_vm(){
+    for CRR_OS in $CRR_OS_L; do
+        setenv_target_vm
+
+        if is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM"; then start_vm && sleep 24; fi
+
+        #ip_address=`get_ip_of_vm_nic $CRR_hostname $CRR_NIC_NUM`
+
+        WAIT_UNTIL is_vm_started "$CRR_hostname" "$CRR_NIC_NUM" && {
+            echo_Q started: "$CRR_hostname" "$CRR_NIC_NUM" cmd_l="$@"
+            for cmd in "$@"; do
+                [ "$cmd" = "shutdown_vm" ] && break
+                # ssh $OPT_ssh root@$ip_address
+                # AR_prep_VM_inst "$CRR_hostname" "$ip_address"
+                ASSERT "$cmd" "$CRR_hostname" "$ip_address"
+            done
+        }
+        [ "$cmd" = "shutdown_vm" ] &&
+            shutdown_vm &&
+               WAIT_UNTIL is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM" && echo stopped: "$CRR_hostname" "$CRR_NIC_NUM"
+        # destroy_vm
+    done
+}
+
+build_all_custom_isos_and_vms
+run_on_each_vm true shutdown_vm # installation phase 1
+
+snapshot_all_vms # each VM is stopped, & DVD ejected for snapshot
+
+CRR_REPO_LIST="NevilleDNZ-download/algol68_autopkg-download"
+#CRR_REPO_LIST="NevilleDNZ/algol68_autopkg"
+
+run_on_each_vm AR_prep_VM_inst AR_configure AR_run AR_status
+#run_on_each_vm                 AR_configure AR_run AR_status
+
+#run_on_each_vm AR_prep_VM_inst 
+#run_on_each_vm AR_run 
+#run_on_each_vm AR_kill 
+#run_on_each_vm shutdown_vm # use shutdown_vm when you cannot run all vm's at once.
+
+#run_on_each_vm AR_prep_VM_inst
+#run_on_each_vm AR_configure
+#run_on_each_vm AR_run
+#run_on_each_vm AR_kill
+#run_on_each_vm AR_remove
+#run_on_each_vm shutdown_vm # assumes vms need to be started first
 
 exit $?
