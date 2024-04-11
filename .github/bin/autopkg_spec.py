@@ -712,7 +712,7 @@ Requires:      {dep_of_this_subpkg[RunRequiresCap]}
 #Conflicts:      tripwire
 #Obsoletes:      bar
 
-Provides: {dep_of_this_subpkg[ProvidesCap]}
+Provides: %PACKAGE %PACKAGE-{SUBPACKAGE} %package_main %package_main-{SUBPACKAGE} {dep_of_this_subpkg[ProvidesCap]}
 %description -n %PACKAGE-{SUBPACKAGE}
 
 {SUBPACKAGE} resources for %PACKAGE
