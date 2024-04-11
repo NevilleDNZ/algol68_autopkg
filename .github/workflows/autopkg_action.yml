@@ -49,7 +49,7 @@ jobs:
       CRJ_JOB_LEVEL_VAR: 'This is a job-level variable'
 
     outputs:
-      CRJ_upload_url:   ${{ steps.create_release_step.outputs.upload_url }}
+      CRJ_upload_url:      ${{ steps.create_release_step.outputs.upload_url }}
 
       CRJ_RELEASE_NAME:    ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}
       CRJ_PACKAGE_VERSION: ${{ steps.name_release_step.outputs.CRJ_PACKAGE_VERSION }}
@@ -75,7 +75,7 @@ jobs:
       - name: 'Name Release'
         id: name_release_step
         run: |
-          cd ${{ github.workspace }}
+          cd "${{ github.workspace }}"
 
           output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
           qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
@@ -110,7 +110,7 @@ jobs:
 
           output CRJ_draft := true
           output CRJ_prerelease := true
-          output CRJ_title := $CRJ_PRJ-$CRJ_PACKAGE_VERSION-$CRJ_BUILD
+          output CRJ_title := "$CRJ_PRJ-$CRJ_PACKAGE_VERSION-$CRJ_BUILD"
           output CRJ_body := Draft/Prerelease
 
           case "$CRJ_PRJ" in
@@ -261,7 +261,7 @@ jobs:
         qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
 
-        cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
+        cd "${{ github.workspace }}"/"${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}"
 
         case "$RUNNER_OS" in
             (Linux)
@@ -305,12 +305,12 @@ jobs:
       id: autopkg_spec_step
       run: |
 
-        cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
-        CRJ_PRJ=${{ needs.create_release_job.outputs.CRJ_PRJ }}
-        CRJ_RELEASE_NAME=${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}
-        CRJ_PACKAGE_VERSION=${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}
+        cd "${{ github.workspace }}"/"${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}"
+        CRJ_PRJ="${{ needs.create_release_job.outputs.CRJ_PRJ }}"
+        CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
+        CRJ_PACKAGE_VERSION="${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}"
 
-        CRJ_PKG_BLD_OPTIONS=${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}
+        CRJ_PKG_BLD_OPTIONS="${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}"
 
         git fetch --tags
         git checkout tags/$CRJ_RELEASE_NAME
@@ -413,7 +413,7 @@ jobs:
         qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
 
-        cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
+        cd "${{ github.workspace }}"/"${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}"
 
         OMJ__ARCH=`../.github/bin/autopkg_mgr.sh echo _arch`
         output OMJ_ARCH := `../.github/bin/autopkg_mgr.sh echo arch`
@@ -422,16 +422,16 @@ jobs:
 
         CRJ_BUILD="${{ needs.create_release_job.outputs.CRJ_BUILD }}"
         CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
-        CRJ_PACKAGE_VERSION=${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}
+        CRJ_PACKAGE_VERSION="${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}"
         
         CRJ_AUTOTOOL_CONFIGURE="${{ needs.create_release_job.outputs.CRJ_AUTOTOOL_CONFIGURE }}"
         CRJ_PRJ="${{ needs.create_release_job.outputs.CRJ_PRJ }}"
         CRJ_GPG_NAME="${{ needs.create_release_job.outputs.CRJ_GPG_NAME }}"
 
-        OMJ_BUILDER=${{ steps.name_build_step.outputs.OMJ_BUILDER }}
-        OMJ_OS_RELEASE=${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}
+        OMJ_BUILDER="${{ steps.name_build_step.outputs.OMJ_BUILDER }}"
+        OMJ_OS_RELEASE="${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}"
 
-        . ${{ github.workspace }}/.github/bin/autopkg_build.sh
+        . "${{ github.workspace }}"/.github/bin/autopkg_build.sh
         ./a68g -V
 
         output CRJ_tag_name := "$CRJ_RELEASE_NAME-$CRJ_BUILD-$OMJ_OS_RELEASE$OMJ__ARCH"
