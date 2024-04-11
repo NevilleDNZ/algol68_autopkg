@@ -78,7 +78,6 @@ jobs:
           cd "${{ github.workspace }}"
 
           output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
-          qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
           read Y m d H M S <<<$(date +"%Y %_m %_d %_H %_M %_S")
           case $m in
@@ -258,7 +257,6 @@ jobs:
         S_STEP_LEVEL_VAR: 'This is a step-level variable'
       run: |
         output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
-        qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
 
         cd "${{ github.workspace }}"/"${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}"
@@ -310,7 +308,7 @@ jobs:
         CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
         CRJ_PACKAGE_VERSION="${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}"
 
-        IFS=" " read CRJ_PKG_BLD_OPTIONS <<< "${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}"
+        IFS=" " read -r -a CRJ_PKG_BLD_OPTIONS <<< "${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}"
 
         git fetch --tags
         git checkout tags/$CRJ_RELEASE_NAME
@@ -410,8 +408,6 @@ jobs:
         DEBSIGN_OPTS: "--no-tty --batch"
       run: |
         output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
-        qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
-
 
         cd "${{ github.workspace }}"/"${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}"
 
