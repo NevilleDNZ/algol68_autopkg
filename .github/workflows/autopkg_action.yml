@@ -115,24 +115,24 @@ jobs:
 
           case "$CRJ_PRJ" in
             (algol68g*)
-              qoutput CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
               --package_main a68g \
               --bin_l a68g-full \
               --include_l a68g.h \
-              --include_l 'a68g-*.h'
+              --include_l "a68g-*.h"
             ;;
             (chess)
-              qoutput CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
               --package_main src/gnuchess
             ;;
             (gawk|*)
-              qoutput CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
@@ -310,7 +310,7 @@ jobs:
         CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
         CRJ_PACKAGE_VERSION="${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}"
 
-        CRJ_PKG_BLD_OPTIONS="${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}"
+        IFS=" " read CRJ_PKG_BLD_OPTIONS <<< "${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}"
 
         git fetch --tags
         git checkout tags/$CRJ_RELEASE_NAME
@@ -334,7 +334,7 @@ jobs:
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
         --package_builder "$package_builder" \
         --local_package_manager "$local_package_manager" \
-          $CRJ_PKG_BLD_OPTIONS
+          "${CRJ_PKG_BLD_OPTIONS[@]}"
 
         python3 ../.github/bin/autopkg_spec.py \
         --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
@@ -342,7 +342,7 @@ jobs:
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
         --package_builder "$package_builder" \
         --local_package_manager "$local_package_manager" \
-          $CRJ_PKG_BLD_OPTIONS
+        "${CRJ_PKG_BLD_OPTIONS[@]}"
 
 # Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
 #   [ Where replace ABCDev68 with your GitHub login ]
