@@ -49,11 +49,16 @@ jobs:
       CRJ_JOB_LEVEL_VAR: 'This is a job-level variable'
 
     outputs:
-      CRJ_upload_url:   ${{ steps.create_release_step.outputs.upload_url }}
+      CRJ_upload_url:      ${{ steps.create_release_step.outputs.upload_url }}
 
       CRJ_RELEASE_NAME:    ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}
       CRJ_PACKAGE_VERSION: ${{ steps.name_release_step.outputs.CRJ_PACKAGE_VERSION }}
       CRJ_BUILD:           ${{ steps.name_release_step.outputs.CRJ_BUILD }}
+
+      CRJ_draft:           ${{ steps.name_release_step.outputs.CRJ_draft }}
+      CRJ_prerelease:      ${{ steps.name_release_step.outputs.CRJ_prerelease }}
+      CRJ_title:           ${{ steps.name_release_step.outputs.CRJ_title }}
+      CRJ_body:            ${{ steps.name_release_step.outputs.CRJ_body }}
 
       CRJ_USER_UPSTREAM:      ${{ steps.name_release_step.outputs.CRJ_USER_UPSTREAM }}
       CRJ_PRJ_UPSTREAM:       ${{ steps.name_release_step.outputs.CRJ_PRJ_UPSTREAM }}
@@ -70,10 +75,9 @@ jobs:
       - name: 'Name Release'
         id: name_release_step
         run: |
-          cd ${{ github.workspace }}
+          cd "${{ github.workspace }}"
 
           output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
-          qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
           read Y m d H M S <<<$(date +"%Y %_m %_d %_H %_M %_S")
           case $m in
@@ -103,27 +107,37 @@ jobs:
           output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
           output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
 
+          output CRJ_draft := true
+          output CRJ_prerelease := true
+          output CRJ_title := "$CRJ_PRJ-$CRJ_PACKAGE_VERSION-$CRJ_BUILD"
+          output CRJ_body := Draft/Prerelease
+
           case "$CRJ_PRJ" in
             (algol68g*)
-              qoutput CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
-              --package_main a68g
+              --package_main a68g \
+              --bin_l a68g-full \
+              --include_l a68g.h \
+              --include_l "a68g-*.h"
             ;;
             (chess)
-              qoutput CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
               --package_main src/gnuchess
             ;;
             (gawk|*)
-              qoutput CRJ_PKG_BLD_OPTIONS := \
+              output CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main $CRJ_PRJ
+              --package_main $CRJ_PRJ \
+              --bin_l $CRJ_PRJ \
+              --include_l None
             ;;
           esac
 
@@ -149,12 +163,12 @@ jobs:
           # release_name: Release v${{ github.run_number }}
 
           tag_name:             ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}-${{ steps.name_release_step.outputs.CRJ_BUILD }}
-          release_name: Release ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}-${{ steps.name_release_step.outputs.CRJ_BUILD }}
-          draft: false
-          prerelease: false
+          release_name: Release ${{ steps.name_release_step.outputs.CRJ_PRJ }}-${{ steps.name_release_step.outputs.CRJ_PACKAGE_VERSION }}-${{ steps.name_release_step.outputs.CRJ_BUILD }}
+          draft: ${{ steps.name_release_step.outputs.CRJ_draft }}
+          prerelease: ${{ steps.name_release_step.outputs.CRJ_prerelease }}
           body: |
-            ## What's Changed...
-            * Under construction.
+            ## ${{ steps.name_release_step.outputs.CRJ_title }}
+            * ${{ steps.name_release_step.outputs.CRJ_body }}
 
   os_matrix_job: # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
     # a.k.a. OMJ
@@ -169,7 +183,8 @@ jobs:
           - raspbian12-armv7l
           - ubuntu-latest
           - ubuntu-20.04
-          - fedora38-x86_64
+          # - fedora38-x86_64
+          - fedora39-x86_64
           # - opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
 #        matrix_os_vm:
 #          - DOLLAR{{ github.event.inputs.WFDP_OS_VM || 'baremetal' }}
@@ -242,10 +257,9 @@ jobs:
         S_STEP_LEVEL_VAR: 'This is a step-level variable'
       run: |
         output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
-        qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
 
-        cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
+        cd "${{ github.workspace }}"/"${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}"
 
         case "$RUNNER_OS" in
             (Linux)
@@ -289,12 +303,12 @@ jobs:
       id: autopkg_spec_step
       run: |
 
-        cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
-        CRJ_PRJ=${{ needs.create_release_job.outputs.CRJ_PRJ }}
-        CRJ_RELEASE_NAME=${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}
-        CRJ_PACKAGE_VERSION=${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}
+        cd "${{ github.workspace }}"/"${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}"
+        CRJ_PRJ="${{ needs.create_release_job.outputs.CRJ_PRJ }}"
+        CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
+        CRJ_PACKAGE_VERSION="${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}"
 
-        CRJ_PKG_BLD_OPTIONS=${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}
+        IFS=" " read -r -a CRJ_PKG_BLD_OPTIONS <<< "${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}"
 
         git fetch --tags
         git checkout tags/$CRJ_RELEASE_NAME
@@ -318,7 +332,7 @@ jobs:
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
         --package_builder "$package_builder" \
         --local_package_manager "$local_package_manager" \
-          $CRJ_PKG_BLD_OPTIONS
+          "${CRJ_PKG_BLD_OPTIONS[@]}"
 
         python3 ../.github/bin/autopkg_spec.py \
         --PACKAGE_VERSION "$CRJ_PACKAGE_VERSION" \
@@ -326,7 +340,7 @@ jobs:
         --os_release "${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}" \
         --package_builder "$package_builder" \
         --local_package_manager "$local_package_manager" \
-          $CRJ_PKG_BLD_OPTIONS
+        "${CRJ_PKG_BLD_OPTIONS[@]}"
 
 # Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
 #   [ Where replace ABCDev68 with your GitHub login ]
@@ -394,10 +408,8 @@ jobs:
         DEBSIGN_OPTS: "--no-tty --batch"
       run: |
         output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
-        qoutput(){ n="$1"; q="'"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='$q"$'"{$n}"'"$q' >> $GITHUB_OUTPUT; }
 
-
-        cd ${{ github.workspace }}/${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}
+        cd "${{ github.workspace }}"/"${{ needs.create_release_job.outputs.CRJ_PRJ_UPSTREAM }}"
 
         OMJ__ARCH=`../.github/bin/autopkg_mgr.sh echo _arch`
         output OMJ_ARCH := `../.github/bin/autopkg_mgr.sh echo arch`
@@ -406,16 +418,16 @@ jobs:
 
         CRJ_BUILD="${{ needs.create_release_job.outputs.CRJ_BUILD }}"
         CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
-        CRJ_PACKAGE_VERSION=${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}
+        CRJ_PACKAGE_VERSION="${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}"
         
         CRJ_AUTOTOOL_CONFIGURE="${{ needs.create_release_job.outputs.CRJ_AUTOTOOL_CONFIGURE }}"
         CRJ_PRJ="${{ needs.create_release_job.outputs.CRJ_PRJ }}"
         CRJ_GPG_NAME="${{ needs.create_release_job.outputs.CRJ_GPG_NAME }}"
 
-        OMJ_BUILDER=${{ steps.name_build_step.outputs.OMJ_BUILDER }}
-        OMJ_OS_RELEASE=${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}
+        OMJ_BUILDER="${{ steps.name_build_step.outputs.OMJ_BUILDER }}"
+        OMJ_OS_RELEASE="${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}"
 
-        . ${{ github.workspace }}/.github/bin/autopkg_build.sh
+        . "${{ github.workspace }}"/.github/bin/autopkg_build.sh
         ./a68g -V
 
         output CRJ_tag_name := "$CRJ_RELEASE_NAME-$CRJ_BUILD-$OMJ_OS_RELEASE$OMJ__ARCH"
