@@ -120,10 +120,9 @@ jobs:
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
               --package_main a68g \
-              --bin_l a68g \
               --bin_l a68g-full \
               --include_l a68g.h \
-              --include_l "a68g-*.h"
+              --include_l "'a68g-*.h'"
             ;;
             (chess)
               qoutput CRJ_PKG_BLD_OPTIONS := \
