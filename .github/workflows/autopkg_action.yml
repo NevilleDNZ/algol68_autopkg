@@ -119,9 +119,9 @@ jobs:
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
               --package_main a68g \
-              --bin_l a68g-full \
-              --include_l a68g.h \
-              --include_l "a68g-*.h"
+              --bindir a68g-full \
+              --includedir a68g.h \
+              --includedir "a68g-*.h"
             ;;
             (chess)
               output CRJ_PKG_BLD_OPTIONS := \
@@ -136,8 +136,16 @@ jobs:
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
               --package_main $CRJ_PRJ \
-              --bin_l $CRJ_PRJ \
-              --include_l None
+              --bindir "*" \
+              --datarootdir "awk/*" \
+              --infodir "*" \
+              --libdir "gawk/*" \
+              --libexecdir "awk/*" \
+              --localedir "*/LC_MESSAGES/*" \
+              --mandir "man?/*" \
+              --oldincludedir "*" \
+              --sysconfdir "profile.d/*"
+              
             ;;
           esac
 

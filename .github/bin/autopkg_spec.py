@@ -439,6 +439,7 @@ Version: {opt_d.PACKAGE_VERSION}
 %endif
 
 %define trunc() %{lc}expand:%%{lc}lua:print(trunc(%1, %2)){rc}{rc}
+%define _localedir %{_datadir}/locale
 
 %{lc}?sle_version: %global platform_name sle
 %global platform_version %{lc}trunc %{lc}?sle_version{rc} 4 {rc} {rc}
@@ -838,20 +839,20 @@ fi
 
 """
 
-    def bin_l(): 
-        if opt_d.bin_l:
+    def bindir(): 
+        if opt_d.bindir:
             return "%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_bindir/"+file for file in opt_d.bin_l if file and file != "None"
+                "%_bindir/"+file for file in opt_d.bindir if file and file != "None"
                 )+"\n"*2
         else:
             return ""
 
 # pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main-*.h,pc_package_main.h
 
-    def include_l(): 
-        if opt_d.include_l:
+    def includedir(): 
+        if opt_d.includedir:
             return "%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_includedir/%PACKAGE/"+file for file in opt_d.include_l if file and file != "None"
+                "%_includedir/%PACKAGE/"+file for file in opt_d.includedir if file and file != "None"
                 )+"\n"*2
         else:
             return ""
@@ -866,11 +867,11 @@ fi
 
 %files -n %PACKAGE-{SUBPACKAGE}
 """+(
-    bin_l()+
-    include_l()
+    bindir()+
+    includedir()
 )+"""
- %doc %_mandir/man?/*
- %doc %_docdir_pkg/*
+%doc %_mandir/man?/*
+%doc %_docdir_pkg/*
  
 # add-license-file-here
 # pre a68g-3.1.9 was: #license LICENSE
@@ -1733,8 +1734,8 @@ if __name__ == "__main__":
         source_input_dir=".",
         build_staging_dir=".",
         insert_headings=False,
-        bin_l="%package_main".split(), #  %package_main-{SUBPACKAGE}".split(),
-        include_l=[] # "%package_main.h %package_main-*.h".split(),
+        bindir="%package_main".split(), #  %package_main-{SUBPACKAGE}".split(),
+        includedir=[] # "%package_main.h %package_main-*.h".split(),
     )
 
 
