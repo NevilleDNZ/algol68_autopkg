@@ -1737,7 +1737,25 @@ if __name__ == "__main__":
         bindir="%package_main".split(), #  %package_main-{SUBPACKAGE}".split(),
         includedir=[] # "%package_main.h %package_main-*.h".split(),
     )
-
+# from `rpm --showrc`
+    build_dir_l="""
+bindir binfmtdir builddir buildrootdir datadir datarootdir defaultdocdir
+defaultlicensedir emacs_sitelispdir emacs_sitestartdir environmentdir
+fileattrsdir fmoddir fontbasedir fontconfig_confdir fontconfig_masterdir
+fontconfig_templatedir includedir infodir initddir initrddir ivyxmldir
+javaconfdir javadir javadocdir jnidir journalcatalogdir jvmcommondatadir
+jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir
+jvmprivdir jvmsysconfdir libdir libexecdir localedir localstatedir mandir
+mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir
+monogacdir oldincludedir pkgdocdir presetdir rpmdir rpmluadir rpmmacrodir
+rundir sbindir sharedstatedir sourcedir specdir srcrpmdir swidtagdir
+sysconfdir sysctldir systemdgeneratordir systemd_system_env_generator_dir
+systemd_user_env_generator_dir systemdusergeneratordir systemd_util_dir
+systemtap_datadir systemtap_tapsetdir sysusersdir tmpfilesdir udevhwdbdir
+udevrulesdir unitdir userpresetdir user_tmpfilesdir userunitdir""".split()
+    for dir in build_dir_l:
+        if dir not in default_opt_d:
+            default_opt_d[dir]=[]
 
     """ Algol68g-2.8.4's 13 options:
         1. With hardware support for long modes
