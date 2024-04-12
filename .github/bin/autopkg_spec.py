@@ -439,7 +439,7 @@ Version: {opt_d.PACKAGE_VERSION}
 %endif
 
 %define trunc() %{lc}expand:%%{lc}lua:print(trunc(%1, %2)){rc}{rc}
-%define _localedir %{_datadir}/locale
+%define _localedir %_datadir/locale
 
 %{lc}?sle_version: %global platform_name sle
 %global platform_version %{lc}trunc %{lc}?sle_version{rc} 4 {rc} {rc}
