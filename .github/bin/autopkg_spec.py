@@ -415,7 +415,7 @@ def get_rpm_spec_template_of_sect_of_subfile():
 Name: {confdefs[PACKAGE_TARNAME]}
 ### {sec_name} ###
 %define PACKAGE {confdefs[PACKAGE_TARNAME]}
-%define package_main {opt_d.package_main}
+%define package_alias {opt_d.package_alias}
 Version: {opt_d.PACKAGE_VERSION}
 
 %{lc}lua:
@@ -440,6 +440,7 @@ Version: {opt_d.PACKAGE_VERSION}
 
 %define trunc() %{lc}expand:%%{lc}lua:print(trunc(%1, %2)){rc}{rc}
 %define _localedir %_datadir/locale
+%define _gamesdir %_datadir/locale
 
 %{lc}?sle_version: %global platform_name sle
 %global platform_version %{lc}trunc %{lc}?sle_version{rc} 4 {rc} {rc}
@@ -713,7 +714,7 @@ Requires:      {dep_of_this_subpkg[RunRequiresCap]}
 #Conflicts:      tripwire
 #Obsoletes:      bar
 
-Provides: %PACKAGE %PACKAGE-{SUBPACKAGE} %package_main %package_main-{SUBPACKAGE} {dep_of_this_subpkg[ProvidesCap]}
+Provides: %PACKAGE %PACKAGE-{SUBPACKAGE} %package_alias %package_alias-{SUBPACKAGE} {dep_of_this_subpkg[ProvidesCap]}
 %description -n %PACKAGE-{SUBPACKAGE}
 
 {SUBPACKAGE} resources for %PACKAGE
@@ -788,11 +789,11 @@ if [ $with_{SUBPACKAGE} == 1 ]; then
     if [ -n "$avoid_automake_install" ]; then touch -r aclocal.m4 configure.ac; else true; fi &&
     {lc} %configure %configure_macro_builtins %configure_cross_build_opts %{SUBPACKAGE}_configure_opt_l; {rc} &&
     %make_build %{lc}?_smp_mflags{rc} ACFLAGS="$RPM_OPT_FLAGS" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" FFLAGS="$FFLAGS" FCFLAGS="$FCFLAGS" LDFLAGS="$LDFLAGS" && # %make_install_dirs
-    %if "%{lc}?package_main{rc}" != ""
-        cp -p %package_main %package_main-{SUBPACKAGE}
+    %if "%{lc}?package_alias{rc}" != ""
+        cp -p %package_alias %package_alias-{SUBPACKAGE}
         %if !%{lc}with quiet{rc}
-            ls -ltr "%package_main"*
-            ./%package_main-{SUBPACKAGE} -V
+            ls -ltr "%package_alias"*
+            ./%package_alias-{SUBPACKAGE} -V
         %endif
     %endif
 fi
@@ -833,46 +834,50 @@ if [ $with_{SUBPACKAGE} == 1 ]; then
     #if #{lc}with {SUBPACKAGE}{rc}
     echo ECHO %make_install %make_install_dirs
     %make_install %make_install_dirs
-    %__install --mode %__attr_x %package_main-{SUBPACKAGE} $RPM_BUILD_ROOT%_bindir/%package_main-{SUBPACKAGE}
+    %__install --mode %__attr_x %package_alias-{SUBPACKAGE} $RPM_BUILD_ROOT%_bindir/%package_alias-{SUBPACKAGE}
     #endif
 fi
 
 """
 
-    def bindir(): 
-        if opt_d.bindir:
-            return "%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_bindir/"+file for file in opt_d.bindir if file and file != "None"
-                )+"\n"*2
-        else:
-            return ""
+    def add_each_dir():
+        file_d=dict(
+            bin=["\n%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)"],
+            doc=["\n%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)"],
+            other=["\n%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)"],
+            # dir=[], # %dir to explicitly include directories, particularly empty ones
+            # config=[],  # %config(noreplace) /etc/myapp.conf # prevent RPM replacing if altered by the user.
+            # attr=[],    # %attr(640, root, root) /etc/securefile
+            # ghost=[],   # %ghost /var/log/myapp/logfile.log # not included in the package payload, but managed
+            # license=[], # %license /usr/share/licenses/myapp/LICENSE
+            # verify=[],  # %verify(not md5 size mtime) /var/run/myapp.pid # not to check
+            # lang=[],    # %lang(fr) /usr/share/locale/fr/LC_MESSAGES/myapp.mo
+            # libexecdir=[], # to store executable for main programs, but not executed directly by users 
+        )
 
-# pre a68g-3.1.9 was: pc_config pc__includedir/pc_package_main-*.h,pc_package_main.h
+        for dir_name in build_dir_name:
+            file_l=opt_d.__getattribute__(dir_name)
+            if file_l:
+                if "bin" in dir_name or "exec" in dir_name or dir_name in ["initddir","initrddir"]:
+                    file_d["bin"]+=["%_"+dir_name+"/"+file for file in file_l if file and file != "None"]
+                elif "defaultdocdir" == dir_name:
+                    file_d["doc"]+=["%doc "+file for file in file_l if file and file != "None"]
+                # elif "localedir" == dir_name:
+                # ToDo ... # %lang(fr) /usr/share/locale/fr/LC_MESSAGES/myapp.mo
+                else:
+                    file_d["other"]+=["%_"+dir_name+"/"+file for file in file_l if file and file != "None"]
+        return "\n".join(file for file_l in file_d.values() if len(file_l)> 1 for file in file_l)
 
-    def includedir(): 
-        if opt_d.includedir:
-            return "%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)\n"+"\n".join(
-                "%_includedir/%PACKAGE/"+file for file in opt_d.includedir if file and file != "None"
-                )+"\n"*2
-        else:
-            return ""
-    
-#%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)
-#%_includedir/%PACKAGE/%package_main-*.h
-#%_includedir/%PACKAGE/%package_main.h
+    """
 
+    """
     template_of_sect_of_spec["files/subpkg"]="""\
 ### {sec_name}/{SUBPACKAGE}  ###
 %if %{lc}with {SUBPACKAGE}{rc}
 
 %files -n %PACKAGE-{SUBPACKAGE}
-"""+(
-    bindir()+
-    includedir()
-)+"""
-%doc %_mandir/man?/*
-%doc %_docdir_pkg/*
- 
+"""+add_each_dir()+"""
+
 # add-license-file-here
 # pre a68g-3.1.9 was: #license LICENSE
 %license COPYING
@@ -994,8 +999,8 @@ def print_autoconf_template(template_of_sect_of_subfile, req_d_of_subpkg_opt, co
 
     confdefs=OrderedDict( ( ( cdh["name"],(cdh["value"] if cdh["desc"] in ["str","code"] else cdh["value"]) )
             for cdh in subpkg_opt_d['confdefs.h.']['paragraph_0'] if "value" in cdh ) )
-    
-    if opt_d.PACKAGE_VERSION is not None: 
+
+    if opt_d.PACKAGE_VERSION is not None:
         print("opt_d.PACKAGE_VERSION:",opt_d.PACKAGE_VERSION)
         confdefs["PACKAGE_VERSION"]=opt_d.PACKAGE_VERSION
 
@@ -1565,7 +1570,7 @@ algol68_example_arg_l=[
 # pre a68g-3.1.9 was:     #'--avoid_automake_install','22079', # some legacy system's have such and old version we need to avoid
     '--DOWNLOAD_PAGE','https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html',
     '--DOCUMENTATION_PAGE','https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html',
-    '--package_main','a68g',
+    '--package_alias','a68g',
 #    '--License','GNU # pre a68g-3.1.9 was: GENERAL PUBLIC LICENSE, Version 3, 29 June 2007 - read[LICENSE]',
     '--License','GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007 - read[COPYING]',
     # '--sub_package_name','tiny',
@@ -1663,7 +1668,7 @@ if __name__ == "__main__":
                     'LD': 'ld', 'static_LDFLAGS': '-Wl,-static',
                     'LDFLAGS': '-g -pie -L/usr/lib64/R/lib',
                     'core_tests': 'Core tests.',
-                    'package_main': 'a68g',
+                    'package_alias': 'a68g',
                     'verbose_requires': False,
                     'so_l': ['.so', '.so.0', '.so.1', '.so.2', '.so.3', '.so.4', '.so.5', '.so.6', '.so.7', '.so.8', '.so.9', '.so.10', '.so.11', '.so.0.0', '.so.0.0.0', '.a'],
                     'ignore_missing': True,
@@ -1722,7 +1727,7 @@ if __name__ == "__main__":
         LDFLAGS=optflags+" -L/usr/lib64/R/lib", # +" -shared",
         # target="i686-all-linux-gnu",
         core_tests="Core tests.",
-        package_main="a68g",
+        package_alias="a68g",
         verbose_requires=not True,
         so_l=(".so .so.0 .so.1 .so.2 .so.3 .so.4 .so.5 .so.6 .so.7 .so.8 .so.9 .so.10 .so.11 .so.0.0 .so.0.0.0 .a".split()),
         ignore_missing=True, # QQQ False
@@ -1734,28 +1739,32 @@ if __name__ == "__main__":
         source_input_dir=".",
         build_staging_dir=".",
         insert_headings=False,
-        bindir="%package_main".split(), #  %package_main-{SUBPACKAGE}".split(),
-        includedir=[] # "%package_main.h %package_main-*.h".split(),
+        bindir=[], # "%package_alias".split(), #  %package_alias-{SUBPACKAGE}".split(),
+        includedir=[] # "%package_alias.h %package_alias-*.h".split(),
     )
 # from `rpm --showrc`
-    build_dir_l="""
-bindir binfmtdir builddir buildrootdir datadir datarootdir defaultdocdir
-defaultlicensedir emacs_sitelispdir emacs_sitestartdir environmentdir
-fileattrsdir fmoddir fontbasedir fontconfig_confdir fontconfig_masterdir
-fontconfig_templatedir includedir infodir initddir initrddir ivyxmldir
-javaconfdir javadir javadocdir jnidir journalcatalogdir jvmcommondatadir
-jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir
-jvmprivdir jvmsysconfdir libdir libexecdir localedir localstatedir mandir
-mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir
-monogacdir oldincludedir pkgdocdir presetdir rpmdir rpmluadir rpmmacrodir
-rundir sbindir sharedstatedir sourcedir specdir srcrpmdir swidtagdir
-sysconfdir sysctldir systemdgeneratordir systemd_system_env_generator_dir
-systemd_user_env_generator_dir systemdusergeneratordir systemd_util_dir
-systemtap_datadir systemtap_tapsetdir sysusersdir tmpfilesdir udevhwdbdir
-udevrulesdir unitdir userpresetdir user_tmpfilesdir userunitdir""".split()
-    for dir in build_dir_l:
-        if dir not in default_opt_d:
-            default_opt_d[dir]=[]
+    build_dir_name="""
+bindir binfmtdir builddir buildrootdir
+datadir datarootdir defaultdocdir defaultlicensedir
+emacs_sitelispdir emacs_sitestartdir environmentdir exec_prefix
+fileattrsdir fmoddir fontbasedir fontconfig_confdir fontconfig_masterdir fontconfig_templatedir
+includedir infodir initddir initrddir ivyxmldir
+javaconfdir javadir javadocdir jnidir journalcatalogdir 
+jvmcommondatadir jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir jvmprivdir jvmsysconfdir
+libdir libexecdir localedir localstatedir 
+mandir mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir monogacdir oldincludedir
+pkgdocdir prefix presetdir
+rpmdir rpmluadir rpmmacrodir rundir
+sbindir sharedstatedir sourcedir specdir srcrpmdir swidtagdir sysconfdir sysctldir
+systemdgeneratordir systemd_system_env_generator_dir systemd_user_env_generator_dir systemdusergeneratordir systemd_util_dir
+systemtap_datadir systemtap_tapsetdir sysusersdir
+tmpfilesdir
+udevhwdbdir udevrulesdir unitdir userpresetdir user_tmpfilesdir userunitdir usr usrsrc
+var
+""".split()
+    for dir_name in build_dir_name:
+        if dir_name not in default_opt_d:
+            default_opt_d[dir_name]=[]
 
     """ Algol68g-2.8.4's 13 options:
         1. With hardware support for long modes
