@@ -436,7 +436,7 @@ jobs:
         OMJ_OS_RELEASE="${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}"
 
         . "${{ github.workspace }}"/.github/bin/autopkg_build.sh
-        ./a68g -V
+        # ./a68g -V
 
         output CRJ_tag_name := "$CRJ_RELEASE_NAME-$CRJ_BUILD-$OMJ_OS_RELEASE$OMJ__ARCH"
 
