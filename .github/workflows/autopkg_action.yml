@@ -118,7 +118,7 @@ jobs:
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
-              --package_main a68g \
+              --package_alias a68g \
               --bindir a68g-full \
               --includedir a68g.h \
               --includedir "a68g-*.h"
@@ -128,14 +128,14 @@ jobs:
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main src/gnuchess
+              --package_alias gnuchess
             ;;
             (gawk|*)
               output CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/$CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main $CRJ_PRJ \
+              --package_alias $CRJ_PRJ \
               --bindir "*" \
               --datarootdir "awk/*" \
               --infodir "*" \
@@ -325,7 +325,7 @@ jobs:
 
         bld_opts=""
 
-        # package_main=a68g
+        # package_alias=a68g
 
         #--package_builder /usr/bin/dpkg-buildpackage \
         #--local_package_manager /usr/bin/dpkg
