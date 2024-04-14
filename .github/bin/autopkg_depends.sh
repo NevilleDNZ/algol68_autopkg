@@ -10,13 +10,14 @@ BLD_DEP="git gcc rpm-build rpm-sign"
 BLD_TINY_DEP="readline-devel"
 BLD_NATIVE_DEP=""
 BLD_REMIX_DEP=""
-BLD_FULL_DEP="gmp-devel mpfr-devel ncurses-devel libpq-devel gsl-devel"
+BLD_FULL_DEP="$BLD_TINY_DEP gmp-devel mpfr-devel ncurses-devel libpq-devel gsl-devel"
 
 # dynamic-libs needed to run
-RUN_TINY_DEP="readline-devel"
+RUN_TINY_DEP="readline"
 RUN_NATIVE_DEP=""
 RUN_REMIX_DEP=""
-RUN_FULL_DEP="gmp-devel mpfr-devel ncurses-devel libpq-devel gsl-devel"
+RUN_FULL_DEP="$RUN_TINY_DEP gmp mpfr ncurses-devel libpq gsl"
+#RUN_FULL_DEP="$RUN_TINY_DEP gmp-devel mpfr-devel ncurses-devel libpq-devel gsl-devel"
 
 LIBS="$BLD_DEP $BLD_FULL_DEP"
 
