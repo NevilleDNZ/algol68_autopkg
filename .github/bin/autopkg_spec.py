@@ -1222,9 +1222,7 @@ def gen_dep_summary_of_lib_l(chapter_d, PACKAGE="algol68g"):
     core_test_d=get_run_req_full_lib(chapter_d)
 # {'hdr': {'mpfr.h'}, 'lib': {'gmp', 'mpfr'}, 'function': {'__gmpz_init', 'mpfr_gamma', 'mpfr_gamma_inc'}}
     for desc_full_lib, run_req_full_lib in core_test_d.items():
-        for key,value in run_req_full_lib.items():
-            if len(value)==0: break
-        else:
+        if any( run_req_full_lib.values() ):
         # Requires: ?? "/usr/bin/autoconf",
             bld_req_bin=find_bin(set(["/usr/bin/gcc","/usr/bin/"+opt_d.package_builder])) # run_req_full_lib["bin"])
             bld_req_hdr=find_hdr(run_req_full_lib["hdr"])
