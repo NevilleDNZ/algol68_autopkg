@@ -839,6 +839,10 @@ if [ $with_{SUBPACKAGE} == 1 ]; then
     echo ECHO %make_install %make_install_dirs
     %make_install %make_install_dirs
     %__install --mode %__attr_x %package_alias-{SUBPACKAGE} $RPM_BUILD_ROOT%_bindir/%package_alias-{SUBPACKAGE}
+    ( cd $RPM_BUILD_ROOT && 
+        echo Installed files: &&
+        find * -type f | sed 's?/[^/]*$?/*?' | sort -u
+    )
     #endif
 fi
 
@@ -884,7 +888,7 @@ fi
 
 # add-license-file-here
 # pre a68g-3.1.9 was: #license LICENSE
-%license COPYING
+# license COPYING
 %endif
 
 """
