@@ -112,6 +112,8 @@ jobs:
           output CRJ_title := "$CRJ_PRJ-$CRJ_PACKAGE_VERSION-$CRJ_BUILD"
           output CRJ_body := Draft/Prerelease
 
+          # Use: create_rpmbuild_files_section.sh gen_autopkg_opts ~/rpmbuild/BUILDROOT/<app_name>-<version>-<release>
+          # to gen_autopkg_opts below, esp. --bindir "*" etc...
           case "$CRJ_PRJ" in
             (algol68g*)
               output CRJ_PKG_BLD_OPTIONS := \
@@ -120,10 +122,10 @@ jobs:
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
               --package_alias a68g \
               --bindir "*" \
-              --defaultdocdir "algol68g/*" \
-              --defaultlicensedir "algol68g-full/*" \
+              --defaultdocdir "./algol68g/*" \
+              --defaultlicensedir "././algol68g*/*" \
               --mandir "man1/*" \
-              --oldincludedir "algol68g/*"
+              --oldincludedir "./././algol68g/*"
               
             ;;
             (chess)
