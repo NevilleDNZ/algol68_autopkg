@@ -119,9 +119,12 @@ jobs:
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
               --package_alias a68g \
-              --bindir a68g-full \
-              --includedir algol68g/a68g.h \
-              --includedir "algol68g/a68g-*.h"
+              --bindir "*" \
+              --defaultdocdir "algol68g/*" \
+              --defaultlicensedir "algol68g-full/*" \
+              --mandir "man1/*" \
+              --oldincludedir "algol68g/*"
+              
             ;;
             (chess)
               output CRJ_PKG_BLD_OPTIONS := \
