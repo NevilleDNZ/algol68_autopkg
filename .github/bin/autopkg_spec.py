@@ -42,9 +42,13 @@ conf_il=(
     ("checking_whether",re.compile(prefix+r"checking whether (?P<other>.*)$")),
     # configure:5545: checking for sys/wait.h that is POSIX.1 compatible
     ("checking_for",re.compile(prefix+r"checking for (?P<hdr>.*[.]h) +(?P<that_is>[^ ]+)")),
+    # configure:8261: checking for working ncursesw/curses.h
+    ("checking_hdr",re.compile(prefix+r"checking for working (?P<hdr>.*[.]h)$")),
     # configure:6342: checking for mpfr.h
     ("checking_hdr",re.compile(prefix+r"checking for (?P<hdr>.*[.]h)$")),
     ("checking_hdr_other",re.compile(prefix+r"checking for (?P<hdr>.*[.]h) *(?P<other>.*)$")),
+    # configure:8072: checking for ncursesw via pkg-config
+    ("checking_lib_has_pc",re.compile(prefix+r"checking for (?P<lib>[^ ]*) via pkg-config$")),
     # configure:6353: checking for mpfr_gamma in -lmpfr
     ("checking_function_in_lib",re.compile(prefix+r"checking for (?P<function>[^ ]*) in -l(?P<lib>[^ ]+)")),
     # configure:5680: checking for aligned_alloc
@@ -1276,9 +1280,12 @@ def gen_dep_summary_of_lib_l(chapter_d, PACKAGE="algol68g"):
                     lib_name=re_lib.search(bld_req_lib[0]).groupdict()["lib"]
                 elif len(run_req_lib_pkg)==1:
                     lib_name=re_pkg.search(run_req_lib_pkg[0]).groupdict()["pkg"]
+                elif desc_full_lib=="check types":
+                    lib_name="types"
                 else:
-                    lib_name=desc_full_lib+"?"
-            if lib_name=="m": lib_name="stdhdr"
+                    lib_name=desc_full_lib+"_QQQ"
+            #if lib_name=="m": lib_name="stdhdr"
+            if lib_name=="m": lib_name="math"
 
             lib_name=lib_name.lower()
             mac_name=re_hyphen.sub("_",lib_name)
@@ -1541,7 +1548,7 @@ class ReadFileDict(object):
             with open(key,"r") as file:
                 return "".join(file)
         except IOError as error:
-            return key+"?"
+            return key+"??"
 
 rf_d=ReadFileDict()
 
