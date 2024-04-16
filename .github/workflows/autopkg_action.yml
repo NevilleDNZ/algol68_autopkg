@@ -49,7 +49,7 @@ jobs:
       CRJ_JOB_LEVEL_VAR: 'This is a job-level variable'
 
     outputs:
-      CRJ_upload_url:      ${{ steps.create_release_step.outputs.upload_url }}
+      CRJ_upload_url:      ${{ steps.setup_release_step.outputs.upload_url }}
 
       CRJ_RELEASE_NAME:    ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}
       CRJ_PACKAGE_VERSION: ${{ steps.name_release_step.outputs.CRJ_PACKAGE_VERSION }}
@@ -156,8 +156,8 @@ jobs:
           echo GITHUB_OUTPUT=$GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
-      - name: 'Create Release'
-        id: create_release_step
+      - name: 'Setup Release'
+        id: setup_release_step
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -351,7 +351,7 @@ jobs:
         --local_package_manager "$local_package_manager" \
         "${CRJ_PKG_BLD_OPTIONS[@]}"
 
-# Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
+# Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/repo_autopkg-downstream"
 #   [ Where replace ABCDev68 with your GitHub login ]
 #   You need:
 #     (A) Create YOUR own GPG "ultimate/GPG-key-pair", to be used for creating new subkeys.
@@ -389,17 +389,17 @@ jobs:
 #  -----END PGP PRIVATE KEY BLOCK-----
 #    
 #   (C) Add (Cut and Paste) this new "PGP PRIVATE KEY BLOCK" to your GitHub repo setup
-#      + https://github.com/ABCDev68/algol68_autopkg/settings/variables/actions/new
-#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/variables/actions/new
+#      + https://github.com/ABCDev68/repo_autopkg/settings/variables/actions/new
+#      + https://github.com/ABCDev68-downstream/repo_autopkg/settings/variables/actions/new
 #      + => [Actions] => [New repository secret]
 #      + ABCDEV68_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24
 #   (D) Update this "autopkg_action.yml" script with YOUR repo name [ABCDev68]/[NevilleDNZ] => YOUR name.
 #   (E) Grant "create-repository" for the .yml file.
-#      + https://github.com/ABCDev68/algol68_autopkg/settings/actions 
+#      + https://github.com/ABCDev68/repo_autopkg/settings/actions 
 #      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
-#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/actions 
+#      + https://github.com/ABCDev68-downstream/repo_autopkg/settings/actions 
 #      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
-#   (G) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
+#   (G) git commit+push YOUR updates to "ABCDev68-downstream/repo_autopkg-downstream" branch trunk
 
 #    - name: 'gpg import key'
 #      # if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
