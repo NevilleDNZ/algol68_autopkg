@@ -529,11 +529,13 @@ URL: {opt_d.DOCUMENTATION_PAGE}
 {rc}
 
 # subpkg options
-%default_with tiny     # minimise what gets installed, avoiding errors on missing optional pkgs
-%default_without full        # try and install every pkg to get a "full" implentation
+%default_with tiny      # minimise what gets installed, avoiding errors on missing optional pkgs
+%default_without full   # try and install every pkg to get a "full" implentation
 
-%default_without remix    # force a remix .RPM to be build
-%default_without native   # create remix pkg "as is", i.e. as per autotools on existing pkgs
+%default_without remix  # force a remix .RPM to be build
+%default_without native # create remix pkg "as is", i.e. as per autotools on existing pkgs
+
+%default_withput check  # run `__make check` with std test suite
 
 # merge_extra_tools to help with cross-platform building publication ...
 %default_with    release
@@ -935,7 +937,7 @@ rm -rf $RPM_BUILD_ROOT
 %check
 ### {sec_name} ###
 %if %{lc}with check{rc}
-__make check
+%__make check
 %else
 echo Check disabled
 %endif
