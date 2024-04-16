@@ -1806,7 +1806,8 @@ jvmcommondatadir jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir
 libdir libexecdir localstatedir
 mandir mavenpomdir metainfodir modprobedir modulesloaddir monodir monogacdir
 oldincludedir
-pam_confdir pam_libdir pam_moduledir pam_secconfdir pam_vendordir pkgdocdir prefix presetdir
+pam_confdir pam_libdir pam_moduledir pam_secconfdir pam_vendordir
+pkgdocdir prefix presetdir
 rpmdir rpmluadir rpmmacrodir rundir runstatedir
 sbindir sharedstatedir sourcedir specdir srcrpmdir swidtagdir sysconfdir sysctldir
 systemd_system_env_generator_dir systemd_user_env_generator_dir systemd_util_dir systemdgeneratordir systemdusergeneratordir
