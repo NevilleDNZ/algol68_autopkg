@@ -1795,6 +1795,7 @@ tmpfilesdir
 udevhwdbdir udevrulesdir unitdir userpresetdir user_tmpfilesdir userunitdir usr usrsrc
 var
 """.split()
+    # Note: generated from `create_rpmbuild_files_section.sh -d`
     fedora39_build_dir_name="""
 bindir binfmtdir builddir buildrootdir
 datadir datarootdir defaultdocdir defaultlicensedir

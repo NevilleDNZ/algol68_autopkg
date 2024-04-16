@@ -1,5 +1,7 @@
 2>&1 # on github the stderr can be delayed
 
+output(){ n="$1"; case "$2" in (:=) shift 2; eval $n="'$*'"; esac; eval echo $n='"$'"$n"'"' >> $GITHUB_OUTPUT; }
+
 # If updating an older project to newer Autoconf syntax: autoupdate
 # aclocal && automake && autoconf && => configure: line 7325: AX_WITH_CURSES: command not found
 if [ "$CRJ_AUTOTOOL_CONFIGURE" = "force-preserve" ]; then
@@ -33,7 +35,8 @@ if [ "$RUNNER_OS" == "Linux" ]; then
         rpmbuild -ba --define "_topdir $TOPDIR" --with full --without tiny --build-in-place "$SPEC"
 
         OMJ_BUILT_SRC=$TOPDIR/SRPMS/$CRJ_PRJ-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".src.rpm
-        OMJ_BUILT_BIN="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-full-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
+        OMJ_BUILT_BIN="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
+        # OMJ_BUILT_DBG="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-debuginfo-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
         # OMJ_BUILT_DBG="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-full-debuginfo-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
 
         # https://stackoverflow.com/questions/11903688/error-trying-to-sign-rpm
@@ -90,10 +93,10 @@ else
     exit 1
 fi
 
-echo OMJ_BUILT_SRC="$OMJ_BUILT_SRC" >> $GITHUB_OUTPUT
-echo OMJ_BUILT_DBG="$OMJ_BUILT_DBG" >> $GITHUB_OUTPUT
-echo OMJ_BUILT_BIN="$OMJ_BUILT_BIN" >> $GITHUB_OUTPUT
+ output OMJ_BUILT_SRC
+ output OMJ_BUILT_DBG
+ output OMJ_BUILT_BIN
 
-echo OMJ_BUILT_SRC_BASENAME="$(basename "$OMJ_BUILT_SRC" )" >> $GITHUB_OUTPUT
-echo OMJ_BUILT_DBG_BASENAME="$(basename "$OMJ_BUILT_DBG" )" >> $GITHUB_OUTPUT
-echo OMJ_BUILT_BIN_BASENAME="$(basename "$OMJ_BUILT_BIN" )" >> $GITHUB_OUTPUT
+ output OMJ_BUILT_SRC_BASENAME := "$(basename "$OMJ_BUILT_SRC" )"
+ output OMJ_BUILT_DBG_BASENAME := "$(basename "$OMJ_BUILT_DBG" )"
+ output OMJ_BUILT_BIN_BASENAME := "$(basename "$OMJ_BUILT_BIN" )"
