@@ -122,7 +122,6 @@ jobs:
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
               --package_alias a68g \
               --bindir "*" \
-              --docdir "/usr" \
               --pkgdocdir "*" \
               --mandir "man1/*" \
               --includedir "algol68g/*"
