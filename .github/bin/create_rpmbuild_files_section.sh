@@ -142,7 +142,7 @@ RPM build errors:
    /usr/share/locale/pl/LC_MESSAGES/gawk.mo
    /usr/share/locale/pt/LC_MESSAGES/gawk.mo
 l object.
-To https://github.com/NevilleDNZ-downstream/algol68_autopkg   /usr/share/locale/pt_BR/LC_MESSAGES/gawk.mo
+To https://github.com/NevilleDNZ-downstream/repo_autopkg   /usr/share/locale/pt_BR/LC_MESSAGES/gawk.mo
    /usr/share/locale/ro/LC_MESSAGES/gawk.mo
    /usr/share/locale/sr/LC_MESSAGES/gawk.mo
    /usr/share/locale/sv/LC_MESSAGES/gawk.mo
