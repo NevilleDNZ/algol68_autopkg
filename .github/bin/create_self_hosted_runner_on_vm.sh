@@ -3348,7 +3348,7 @@ depr_get_vm_ip (){
             sed ':a; N; $!ba; s/\n/|/g')"
 
     # Find the IP address using the ARP table
-    ip neigh | egrep "$re_mac" | awk '{ print $1 }'
+    ip neigh | grep -E "$re_mac" | awk '{ print $1 }'
 }
 
 # awk '/^[a-z_]* \(\){/ { print "        (--"$1"|"$1") "$1" \"$@\";;"; }' bin/create_self_hosted_runner_on_vm.sh
