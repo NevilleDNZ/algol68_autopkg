@@ -122,10 +122,10 @@ jobs:
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
               --package_alias a68g \
               --bindir "*" \
-              --defaultdocdir "algol68g/*" \
+              --pkgdocdir "*" \
               --mandir "man1/*" \
               --includedir "algol68g/*"
-            # --defaultlicensedir "algol68g*/*" - ToDo: ask Marcel to add this to ./configure.ac
+            # --defaultlicensedir "algol68g*/*" - ToDo: ask Marcel to add license to ./configure.ac
             ;;
             (chess)
               output CRJ_PKG_BLD_OPTIONS := \
@@ -147,7 +147,7 @@ jobs:
               --libexecdir "awk/*" \
               --localedir "*/LC_MESSAGES/*" \
               --mandir "man?/*" \
-              --oldincludedir "*" \
+              --includedir "*" \
               --sysconfdir "profile.d/*"
               
             ;;
