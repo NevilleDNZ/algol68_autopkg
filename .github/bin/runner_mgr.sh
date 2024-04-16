@@ -1,6 +1,6 @@
 #!/bin/bash
 
-def_SHR_REPO_NAME="NevilleDNZ-downstream/algol68_autopkg-downstream"
+def_SHR_REPO_NAME="NevilleDNZ-downstream/repo_autopkg-downstream"
 
 OPT_read= # was: -e, but this may not work in ssh??
 UNTAR_DIR=untar
@@ -168,9 +168,9 @@ case "$cmd" in
             # runs-on: self-hosted
         fi
     ;;
-#neville+    4657    3605  0 13:51 pts/0    00:00:00 /bin/bash /home/nevilledbld/AR/actions-runner/NevilleDNZ/algol68_autopkg/fedora-server-x86-64-39-1-5-vbox/run.sh
-#neville+    4664    4657  0 13:51 pts/0    00:00:00 /bin/bash /home/nevilledbld/AR/actions-runner/NevilleDNZ/algol68_autopkg/fedora-server-x86-64-39-1-5-vbox/run-helper.sh
-#neville+    4668    4664 19 13:51 pts/0    00:00:01 /home/nevilledbld/AR/actions-runner/NevilleDNZ/algol68_autopkg/fedora-server-x86-64-39-1-5-vbox/bin/Runner.Listener run
+#neville+    4657    3605  0 13:51 pts/0    00:00:00 /bin/bash /home/nevilledbld/AR/actions-runner/NevilleDNZ/repo_autopkg/fedora-server-x86-64-39-1-5-vbox/run.sh
+#neville+    4664    4657  0 13:51 pts/0    00:00:00 /bin/bash /home/nevilledbld/AR/actions-runner/NevilleDNZ/repo_autopkg/fedora-server-x86-64-39-1-5-vbox/run-helper.sh
+#neville+    4668    4664 19 13:51 pts/0    00:00:01 /home/nevilledbld/AR/actions-runner/NevilleDNZ/repo_autopkg/fedora-server-x86-64-39-1-5-vbox/bin/Runner.Listener run
     (kill) # cmd
         get_SHR_REPO_NAME "$1"
         get_SHR_RUNNER_NAME "$2"
