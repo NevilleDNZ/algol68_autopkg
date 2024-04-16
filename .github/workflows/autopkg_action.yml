@@ -41,9 +41,9 @@ jobs:
 # actions/create-release@v1 to create releases:
 
   create_release_job: # a.k.a CRJ
-    # runs-on: ubuntu-latest
+    # runs-on: Linux
     # runs-on: rhel9.3-x86_64
-    runs-on: Linux
+    runs-on: ubuntu-latest
 
     env:
       CRJ_JOB_LEVEL_VAR: 'This is a job-level variable'
