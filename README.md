@@ -1,3 +1,3 @@
-# GitHub algol68_autopkg Project
+# GitHub repo_autopkg Project
 
 Under Construction

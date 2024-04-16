@@ -1,14 +1,14 @@
 name: Automated Algol68 RPM & DEB Package Releases using an extension to GNU Autotools
 
 # name: Reusable Workflow
-# 
+#
 # on:
 #   workflow_call:
 #     inputs:
 #        a: { required: true, type: string}
 #        b: { required: true, type: string}
 #        c: { required: true, type: string}
-# 
+#
 # jobs:
 #   reusable-job:
 #     runs-on: ubuntu-latest
@@ -18,7 +18,7 @@ name: Automated Algol68 RPM & DEB Package Releases using an extension to GNU Aut
 #       - name: Use Input b
 #         run: echo "Input b is ${{ inputs.b }}"
 
-on: 
+on:
   workflow_call:
     inputs:
       WFDP_BUILD: {required: true, type: string}
@@ -30,7 +30,7 @@ on:
 
 # permissions: # ensure that the workflow has the necessary permissions to create releases
 #  contents: write
-  
+
 #env:
 #  NJOBS_WORKFLOW_LEVEL_VAR: 'This is a workflow-level variable'
 
@@ -49,7 +49,7 @@ jobs:
       CRJ_JOB_LEVEL_VAR: 'This is a job-level variable'
 
     outputs:
-      CRJ_upload_url:      ${{ steps.create_release_step.outputs.upload_url }}
+      CRJ_upload_url:      ${{ steps.setup_release_step.outputs.upload_url }}
 
       CRJ_RELEASE_NAME:    ${{ steps.name_release_step.outputs.CRJ_RELEASE_NAME }}
       CRJ_PACKAGE_VERSION: ${{ steps.name_release_step.outputs.CRJ_PACKAGE_VERSION }}
@@ -88,16 +88,16 @@ jobs:
           esac
           #(( yymdd00=(((Y-2000)*10+m)*100+d)*100 + ((H*60+M)*60+S)*100/(24*60*60) )) # to 100th of day
           (( yymdd00=(((Y-2000)*10+m)*100+d)*100 + H*4+M/15 )) # to 15min window
-          
+
           CRJ_BUILD="${{ github.event.inputs.WFDP_BUILD         || 'YYmDD' }}"
           case "$CRJ_BUILD" in
             (YYmDD|"") CRJ_BUILD="$yymdd00";;
           # (*)        CRJ_BUILD="$CRJ_BUILD";;
           esac
           output CRJ_BUILD
-          
+
           # ToDo: get most recent release tag on trunk!
-          output CRJ_RELEASE_NAME := "${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}" 
+          output CRJ_RELEASE_NAME := "${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.1' }}"
           output CRJ_PACKAGE_VERSION := "$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")"
 
           output CRJ_USER_UPSTREAM := "${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}"
@@ -105,47 +105,58 @@ jobs:
           output CRJ_INCLUDE_LIBS :=  "${{ github.event.inputs.WFDP_INCLUDE_LIBS  || 'full' }}"
           output CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}"
           output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
-          output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}" 
+          output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}"
 
           output CRJ_draft := true
           output CRJ_prerelease := true
           output CRJ_title := "$CRJ_PRJ-$CRJ_PACKAGE_VERSION-$CRJ_BUILD"
           output CRJ_body := Draft/Prerelease
 
+          # Use: create_rpmbuild_files_section.sh gen_autopkg_opts ~/rpmbuild/BUILDROOT/<app_name>-<version>-<release>
+          # to gen_autopkg_opts below, esp. --bindir "*" etc...
           case "$CRJ_PRJ" in
             (algol68g*)
               output CRJ_PKG_BLD_OPTIONS := \
               --Source https://jmvdveer.home.xs4all.nl/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://jmvdveer.home.xs4all.nl/en.download.algol-68-genie-current.html \
               --DOCUMENTATION_PAGE https://jmvdveer.home.xs4all.nl/en.algol-68-genie.html \
-              --package_main a68g \
-              --bin_l a68g-full \
-              --include_l a68g.h \
-              --include_l "a68g-*.h"
+              --package_alias a68g \
+              --bindir "*" \
+              --pkgdocdir "*" \
+              --mandir "man1/*" \
+              --includedir "algol68g/*"
+            # --defaultlicensedir "algol68g*/*" - ToDo: ask Marcel to add license to ./configure.ac
             ;;
             (chess)
               output CRJ_PKG_BLD_OPTIONS := \
               --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main src/gnuchess
+              --package_alias gnuchess
             ;;
             (gawk|*)
               output CRJ_PKG_BLD_OPTIONS := \
-              --Source https://ftp.gnu.org/gnu/CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
+              --Source https://ftp.gnu.org/gnu/$CRJ_PRJ/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz \
               --DOWNLOAD_PAGE https://ftp.gnu.org/gnu/$CRJ_PRJ \
               --DOCUMENTATION_PAGE https://www.gnu.org/software/$CRJ_PRJ/manual \
-              --package_main $CRJ_PRJ \
-              --bin_l $CRJ_PRJ \
-              --include_l None
+              --package_alias $CRJ_PRJ \
+              --bindir "*" \
+              --datarootdir "awk/*" \
+              --datarootdir "locale/*/LC_MESSAGES/*" \
+              --infodir "*" \
+              --libdir "gawk/*" \
+              --libexecdir "awk/*" \
+              --mandir "man?/*" \
+              --includedir "*" \
+              --sysconfdir "profile.d/*"
             ;;
           esac
 
           echo GITHUB_OUTPUT=$GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
-      - name: 'Create Release'
-        id: create_release_step
+      - name: 'Setup Release'
+        id: setup_release_step
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -183,9 +194,9 @@ jobs:
           - raspbian12-armv7l
           - ubuntu-latest
           - ubuntu-20.04
-          # - fedora38-x86_64
+          #- fedora38-x86_64
           - fedora39-x86_64
-          # - opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
+          #- opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
 #        matrix_os_vm:
 #          - DOLLAR{{ github.event.inputs.WFDP_OS_VM || 'baremetal' }}
 #          # - baremetal/ssh
@@ -310,14 +321,11 @@ jobs:
 
         IFS=" " read -r -a CRJ_PKG_BLD_OPTIONS <<< "${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}"
 
-        git fetch --tags
-        git checkout tags/$CRJ_RELEASE_NAME
-
-        git branch -a
+        git fetch origin $CRJ_RELEASE_NAME
 
         bld_opts=""
 
-        # package_main=a68g
+        # package_alias=a68g
 
         #--package_builder /usr/bin/dpkg-buildpackage \
         #--local_package_manager /usr/bin/dpkg
@@ -342,7 +350,7 @@ jobs:
         --local_package_manager "$local_package_manager" \
         "${CRJ_PKG_BLD_OPTIONS[@]}"
 
-# Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/algol68_autopkg-downstream"
+# Notes: customize setup for YOUR new forked repo eg. "ABCDev68-downstream/repo_autopkg-downstream"
 #   [ Where replace ABCDev68 with your GitHub login ]
 #   You need:
 #     (A) Create YOUR own GPG "ultimate/GPG-key-pair", to be used for creating new subkeys.
@@ -360,7 +368,7 @@ jobs:
 #     + gpg> addkey
 #     +    Your selection? 4 (4) RSA (sign only)
 #     +    RSA keys may be between 1024 and 4096 bits long.
-#     +    What keysize do you want? (3072) 
+#     +    What keysize do you want? (3072)
 #     +    Requested keysize is 3072 bits
 #     +    Please specify how long the key should be valid.
 #     +          <n>y = key expires in n years
@@ -369,7 +377,7 @@ jobs:
 #     +    Is this correct? (y/N) y
 #     +    Really create? (y/N) y
 #     +  ...
-#     + returns: ssb  rsa3072/60CC45A2639D9555 => created: 2024-03-25  expires: 2030-03-24  usage: S 
+#     + returns: ssb  rsa3072/60CC45A2639D9555 => created: 2024-03-25  expires: 2030-03-24  usage: S
 #     + $ gpg --export-secret-keys --armor 60CC45A2639D9555
 # -----BEGIN PGP PRIVATE KEY BLOCK-----
 #
@@ -378,19 +386,19 @@ jobs:
 #  SecretSecretSecretSecretSecretSecretSecretSecretSecretSecret....
 #
 #  -----END PGP PRIVATE KEY BLOCK-----
-#    
+#
 #   (C) Add (Cut and Paste) this new "PGP PRIVATE KEY BLOCK" to your GitHub repo setup
-#      + https://github.com/ABCDev68/algol68_autopkg/settings/variables/actions/new
-#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/variables/actions/new
+#      + https://github.com/ABCDev68/repo_autopkg/settings/variables/actions/new
+#      + https://github.com/ABCDev68-downstream/repo_autopkg/settings/variables/actions/new
 #      + => [Actions] => [New repository secret]
 #      + ABCDEV68_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24
 #   (D) Update this "autopkg_action.yml" script with YOUR repo name [ABCDev68]/[NevilleDNZ] => YOUR name.
 #   (E) Grant "create-repository" for the .yml file.
-#      + https://github.com/ABCDev68/algol68_autopkg/settings/actions 
+#      + https://github.com/ABCDev68/repo_autopkg/settings/actions
 #      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
-#      + https://github.com/ABCDev68-downstream/algol68_autopkg/settings/actions 
+#      + https://github.com/ABCDev68-downstream/repo_autopkg/settings/actions
 #      + => Read and write permissions [Workflows have read and write permissions in the repository for all scopes.]
-#   (G) git commit+push YOUR updates to "ABCDev68-downstream/algol68_autopkg-downstream" branch trunk
+#   (G) git commit+push YOUR updates to "ABCDev68-downstream/repo_autopkg-downstream" branch trunk
 
 #    - name: 'gpg import key'
 #      # if: ${{ secrets.NEVILLED_ALGOL68_AT_SGR_A_NET_EXP_2030_03_24 != '' }}
@@ -419,7 +427,7 @@ jobs:
         CRJ_BUILD="${{ needs.create_release_job.outputs.CRJ_BUILD }}"
         CRJ_RELEASE_NAME="${{ needs.create_release_job.outputs.CRJ_RELEASE_NAME }}"
         CRJ_PACKAGE_VERSION="${{ needs.create_release_job.outputs.CRJ_PACKAGE_VERSION }}"
-        
+
         CRJ_AUTOTOOL_CONFIGURE="${{ needs.create_release_job.outputs.CRJ_AUTOTOOL_CONFIGURE }}"
         CRJ_PRJ="${{ needs.create_release_job.outputs.CRJ_PRJ }}"
         CRJ_GPG_NAME="${{ needs.create_release_job.outputs.CRJ_GPG_NAME }}"
@@ -428,7 +436,7 @@ jobs:
         OMJ_OS_RELEASE="${{ steps.name_build_step.outputs.OMJ_OS_RELEASE }}"
 
         . "${{ github.workspace }}"/.github/bin/autopkg_build.sh
-        ./a68g -V
+        # ./a68g -V
 
         output CRJ_tag_name := "$CRJ_RELEASE_NAME-$CRJ_BUILD-$OMJ_OS_RELEASE$OMJ__ARCH"
 
@@ -438,7 +446,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ needs.create_release_job.outputs.CRJ_upload_url }} 
+        upload_url: ${{ needs.create_release_job.outputs.CRJ_upload_url }}
         asset_path: ${{ steps.autopkg_build_step.outputs.OMJ_BUILT_BIN }}
         asset_name: ${{ steps.autopkg_build_step.outputs.OMJ_BUILT_BIN_BASENAME }}
         asset_content_type: ${{ steps.autopkg_build_step.outputs.OMJ_MIME }}
@@ -487,7 +495,7 @@ jobs:
 #     GITHUB_HEAD_REF and GITHUB_BASE_REF: Used in pull requests, representing the head and base refs.
 #     GITHUB_SERVER_URL, GITHUB_API_URL, GITHUB_GRAPHQL_URL: URLs to GitHub server, API, and GraphQL endpoint.
 #
-# These environment variables provide contextual information about the workflow run, the repository, 
+# These environment variables provide contextual information about the workflow run, the repository,
 # and the event that triggered the workflow, allowing for more dynamic and informed operations within your actions.
 # Summary:
 #

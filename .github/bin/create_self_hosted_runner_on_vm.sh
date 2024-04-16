@@ -2,8 +2,8 @@
 
 #CRR_REPO="https://github.com/NevilleDNZ-downstream/algol68g-release-builder-downstream"
 CRR_REPO_URL="https://github.com"
-CRR_REPO="$CRR_REPO_URL/NevilleDNZ/algol68-autopkg"
-CRR_REPO="$CRR_REPO_URL/NevilleDNZ-downstream/algol68-autopkg-downstream"
+CRR_REPO="$CRR_REPO_URL/NevilleDNZ/repo_autopkg"
+CRR_REPO="$CRR_REPO_URL/NevilleDNZ-downstream/repo_autopkg-downstream"
 
 CRR_VM=qemu
 CRR_VM=kvm
@@ -3348,7 +3348,7 @@ depr_get_vm_ip (){
             sed ':a; N; $!ba; s/\n/|/g')"
 
     # Find the IP address using the ARP table
-    ip neigh | egrep "$re_mac" | awk '{ print $1 }'
+    ip neigh | grep -E "$re_mac" | awk '{ print $1 }'
 }
 
 # awk '/^[a-z_]* \(\){/ { print "        (--"$1"|"$1") "$1" \"$@\";;"; }' bin/create_self_hosted_runner_on_vm.sh
@@ -3464,8 +3464,8 @@ run_on_each_vm true shutdown_vm # installation phase 1
 
 snapshot_all_vms # each VM is stopped, & DVD ejected for snapshot
 
-CRR_REPO_LIST="NevilleDNZ-download/algol68_autopkg-download"
-#CRR_REPO_LIST="NevilleDNZ/algol68_autopkg"
+CRR_REPO_LIST="NevilleDNZ-download/repo_autopkg-download"
+#CRR_REPO_LIST="NevilleDNZ/repo_autopkg"
 
 run_on_each_vm AR_prep_VM_inst AR_configure AR_run AR_status
 #run_on_each_vm                 AR_configure AR_run AR_status
