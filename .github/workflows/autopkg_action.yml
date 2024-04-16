@@ -322,10 +322,7 @@ jobs:
 
         IFS=" " read -r -a CRJ_PKG_BLD_OPTIONS <<< "${{ needs.create_release_job.outputs.CRJ_PKG_BLD_OPTIONS }}"
 
-        git fetch --tags
-        git checkout tags/$CRJ_RELEASE_NAME
-
-        git branch -a
+        git fetch origin $CRJ_RELEASE_NAME
 
         bld_opts=""
 
