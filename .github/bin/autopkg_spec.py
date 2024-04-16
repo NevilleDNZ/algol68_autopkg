@@ -673,12 +673,12 @@ Ubuntu22 full requires:
 
     template_of_sect_of_spec["head_set_dirs"]="""\
 ### {sec_name} ###
-%define _docdir_pkg %_defaultdocdir/%PACKAGE
+#define _pkgdocdir #_defaultdocdir/%PACKAGE
 %define configure_macro_builtins --bindir=%_bindir --sbindir=%_sbindir --includedir=%_includedir \
     --oldincludedir=%_oldincludedir --libdir=%_libdir --libexecdir=%_libexecdir --localstatedir=%_localstatedir \
     --datarootdir=%_datarootdir --datadir=%_datadir --sysconfdir=%_sysconfdir --mandir=%_mandir \
-    --infodir=%_infodir --docdir=%_docdir_pkg
-%define make_install_dirs docdir=%_docdir_pkg bindir=%_bindir datadir=%_datadir datarootdir=%_datarootdir \
+    --infodir=%_infodir
+%define make_install_dirs bindir=%_bindir datadir=%_datadir datarootdir=%_datarootdir \
     defaultdocdir=%_defaultdocdir exec_prefix=%_exec_prefix includedir=%_includedir infodir=%_infodir \
     initddir=%_initddir libdir=%_libdir libexecdir=%_libexecdir lib=%_lib localstatedir=%_localstatedir \
     mandir=%_mandir oldincludedir=%_oldincludedir prefix=%_prefix rundir=%_rundir sbindir=%_sbindir \
@@ -848,7 +848,7 @@ if [ $with_{SUBPACKAGE} == 1 ]; then
     echo macro: _datarootdir="%_datarootdir"
     echo macro: _oldincludedir="%_oldincludedir"
     echo macro: _includedir="%_includedir"
-    echo macro: _man="%_man"
+    echo macro: _mandir="%_mandir"
     echo macro: _pkgdocdir="%_pkgdocdir"
     echo macro: _defaultdocdir="%_defaultdocdir"
     echo macro: _defaultlicensedir="%_defaultlicensedir"
