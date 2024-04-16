@@ -1815,7 +1815,7 @@ sysusersdir
 tmpfilesdir
 udevhwdbdir udevrulesdir unitdir user_tmpfilesdir userpresetdir userunitdir usr usrsrc
 var
-"""
+""".split()
     for dir_name in fedora39_build_dir_name:
         if dir_name not in default_opt_d:
             default_opt_d[dir_name]=[]
