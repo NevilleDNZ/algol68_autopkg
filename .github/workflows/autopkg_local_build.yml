@@ -8,9 +8,9 @@ name: dispatch local build
 #        c: { required: true, type: string}
 on:
     push:
-       branches: [ "trunk",  "develop" ]
+       branches: [ "develop" ]
     pull_request:
-       branches: [ "trunk",  "develop" ]
+       branches: [ "develop" ]
 #   # https://gist.github.com/Daniel-ltw/552b90800b07c22e4a83dfa68ada6318 ...
 #     repository_dispatch:
 #       types:
