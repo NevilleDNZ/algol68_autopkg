@@ -866,7 +866,7 @@ fi
             bin=["\n%defattr(%__attr_x,%PkgUID,%PkgGID,%__attr_x)"],
             doc=["\n%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)"],
             other=["\n%defattr(%__attr_r,%PkgUID,%PkgGID,%__attr_x)"],
-            # dir=[], # %dir to explicitly include directories, particularly empty ones
+            # dir=[],     # %dir to explicitly include directories, particularly empty ones
             # config=[],  # %config(noreplace) /etc/myapp.conf # prevent RPM replacing if altered by the user.
             # attr=[],    # %attr(640, root, root) /etc/securefile
             # ghost=[],   # %ghost /var/log/myapp/logfile.log # not included in the package payload, but managed
@@ -874,9 +874,12 @@ fi
             # verify=[],  # %verify(not md5 size mtime) /var/run/myapp.pid # not to check
             # lang=[],    # %lang(fr) /usr/share/locale/fr/LC_MESSAGES/myapp.mo
             # libexecdir=[], # to store executable for main programs, but not executed directly by users
+            # %exclude=[],   # Excludes files from being packaged,
+            # %missingok=[], # Indicates that it is acceptable if the file does not exist.
+            # %docdir=[],    # Similar to %doc but used to specify an entire directory.
         )
 
-        for dir_name in build_dir_name:
+        for dir_name in fedora39_build_dir_name:
             file_l=opt_d.__getattribute__(dir_name)
             if file_l:
                 if "bin" in dir_name or "exec" in dir_name or dir_name in ["initddir","initrddir"]:
@@ -892,7 +895,7 @@ fi
     """
 
     """
-    template_of_sect_of_spec["files/subpkg"]="""\
+    '''template_of_sect_of_spec["files/subpkg"]="""\
 ### {sec_name}/{SUBPACKAGE}  ###
 %if %{lc}with {SUBPACKAGE}{rc}
 
@@ -904,7 +907,13 @@ fi
 # license COPYING
 %endif
 
-"""
+"""'''
+
+    template_of_sect_of_spec["files"]="""\
+### {sec_name}  ###
+%files
+"""+add_each_dir()
+    
     template_of_sect_of_spec["clean"]="""
 %clean
 %{lc}prelude -o 4 -s CLEAN -n %PACKAGE{rc}
@@ -1765,7 +1774,8 @@ if __name__ == "__main__":
         includedir=[] # "%package_alias.h %package_alias-*.h".split(),
     )
 # from `rpm --showrc`
-    build_dir_name="""
+# for future rhel reference...
+    rhel9_build_dir_name="""
 bindir binfmtdir builddir buildrootdir
 datadir datarootdir defaultdocdir defaultlicensedir
 emacs_sitelispdir emacs_sitestartdir environmentdir exec_prefix
@@ -1773,7 +1783,7 @@ fileattrsdir fmoddir fontbasedir fontconfig_confdir fontconfig_masterdir fontcon
 includedir infodir initddir initrddir ivyxmldir
 javaconfdir javadir javadocdir jnidir journalcatalogdir
 jvmcommondatadir jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir jvmprivdir jvmsysconfdir
-libdir libexecdir localedir localstatedir
+libdir libexecdir localstatedir
 mandir mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir monogacdir
 oldincludedir
 pkgdocdir prefix presetdir
@@ -1785,7 +1795,27 @@ tmpfilesdir
 udevhwdbdir udevrulesdir unitdir userpresetdir user_tmpfilesdir userunitdir usr usrsrc
 var
 """.split()
-    for dir_name in build_dir_name:
+    fedora39_build_dir_name="""
+bindir binfmtdir builddir buildrootdir
+datadir datarootdir defaultdocdir defaultlicensedir
+environmentdir exec_prefix
+fileattrsdir fmoddir fontbasedir fontconfig_confdir fontconfig_masterdir fontconfig_templatedir
+iconsdir includedir infodir initddir initrddir ivyxmldir
+javaconfdir javadir javadocdir jnidir journalcatalogdir
+jvmcommondatadir jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir jvmprivdir jvmsysconfdir
+libdir libexecdir localstatedir
+mandir mavenpomdir metainfodir modprobedir modulesloaddir monodir monogacdir
+oldincludedir
+pam_confdir pam_libdir pam_moduledir pam_secconfdir pam_vendordir pkgdocdir prefix presetdir
+rpmdir rpmluadir rpmmacrodir rundir runstatedir
+sbindir sharedstatedir sourcedir specdir srcrpmdir swidtagdir sysconfdir sysctldir
+systemd_system_env_generator_dir systemd_user_env_generator_dir systemd_util_dir systemdgeneratordir systemdusergeneratordir
+sysusersdir
+tmpfilesdir
+udevhwdbdir udevrulesdir unitdir user_tmpfilesdir userpresetdir userunitdir usr usrsrc
+var
+"""
+    for dir_name in fedora39_build_dir_name:
         if dir_name not in default_opt_d:
             default_opt_d[dir_name]=[]
 

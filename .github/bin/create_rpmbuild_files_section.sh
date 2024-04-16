@@ -7,7 +7,7 @@ fileattrsdir fmoddir fontbasedir fontconfig_confdir fontconfig_masterdir fontcon
 includedir infodir initddir initrddir ivyxmldir
 javaconfdir javadir javadocdir jnidir journalcatalogdir 
 jvmcommondatadir jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir jvmprivdir jvmsysconfdir
-libdir libexecdir localedir localstatedir 
+libdir libexecdir localstatedir 
 mandir mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir monogacdir
 oldincludedir
 pkgdocdir prefix presetdir
@@ -27,8 +27,7 @@ re_val="(/|%{$re_var})"
 
 gen_macros(){
     rpm --showrc | {
-        egrep "^-[0-9]*: $re_var$tab$re_val.*"
-        echo "%def _localedir %{_datadir}/locale"
+        grep -E "^-[0-9]*: $re_var$tab$re_val.*"
     } |
     while read a var val etc; do
         val="`rpm --eval "$val"`"
@@ -179,7 +178,7 @@ gen_files_section(){
 }
 
 help(){
-    cat << eof
+    more << eof
 Usage:
    create_rpmbuild_files_section.sh gen_dirs ~/rpmbuild/BUILDROOT/<app_name>-<version>-<release>
    create_rpmbuild_files_section.sh gen_files_section ~/rpmbuild/BUILDROOT/<app_name>-<version>-<release>
@@ -218,6 +217,7 @@ prepend /path/to/temp to all installation paths specified by the PREFIX and
 other related directories (BINDIR, LIBDIR, etc.). This allows the installed
 files to be packaged by tools like rpmbuild, without interfering with the
 actual system files.  
+
 
 How DESTDIR Works with PREFIX:
 
