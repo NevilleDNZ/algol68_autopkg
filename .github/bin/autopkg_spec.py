@@ -839,7 +839,20 @@ if [ $with_{SUBPACKAGE} == 1 ]; then
     echo ECHO %make_install %make_install_dirs
     %make_install %make_install_dirs
     %__install --mode %__attr_x %package_alias-{SUBPACKAGE} $RPM_BUILD_ROOT%_bindir/%package_alias-{SUBPACKAGE}
-    ( cd $RPM_BUILD_ROOT && 
+    echo macro: RPM_BUILD_ROOT="$RPM_BUILD_ROOT"
+    echo macro: _buildrootdir="%_buildrootdir"
+    echo macro: _builddir="%_builddir"
+    echo macro: _prefix="%_prefix"
+    echo macro: _usr="%_usr"
+    echo macro: _bindir="%_bindir"
+    echo macro: _datarootdir="%_datarootdir"
+    echo macro: _oldincludedir="%_oldincludedir"
+    echo macro: _includedir="%_includedir"
+    echo macro: _man="%_man"
+    echo macro: _pkgdocdir="%_pkgdocdir"
+    echo macro: _defaultdocdir="%_defaultdocdir"
+    echo macro: _defaultlicensedir="%_defaultlicensedir"
+    ( cd $RPM_BUILD_ROOT &&
         echo Installed files: &&
         find * -type f | sed 's?/[^/]*$?/*?' | sort -u
     )
@@ -860,7 +873,7 @@ fi
             # license=[], # %license /usr/share/licenses/myapp/LICENSE
             # verify=[],  # %verify(not md5 size mtime) /var/run/myapp.pid # not to check
             # lang=[],    # %lang(fr) /usr/share/locale/fr/LC_MESSAGES/myapp.mo
-            # libexecdir=[], # to store executable for main programs, but not executed directly by users 
+            # libexecdir=[], # to store executable for main programs, but not executed directly by users
         )
 
         for dir_name in build_dir_name:
@@ -1758,10 +1771,11 @@ datadir datarootdir defaultdocdir defaultlicensedir
 emacs_sitelispdir emacs_sitestartdir environmentdir exec_prefix
 fileattrsdir fmoddir fontbasedir fontconfig_confdir fontconfig_masterdir fontconfig_templatedir
 includedir infodir initddir initrddir ivyxmldir
-javaconfdir javadir javadocdir jnidir journalcatalogdir 
+javaconfdir javadir javadocdir jnidir journalcatalogdir
 jvmcommondatadir jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir jvmprivdir jvmsysconfdir
-libdir libexecdir localedir localstatedir 
-mandir mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir monogacdir oldincludedir
+libdir libexecdir localedir localstatedir
+mandir mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir monogacdir
+oldincludedir
 pkgdocdir prefix presetdir
 rpmdir rpmluadir rpmmacrodir rundir
 sbindir sharedstatedir sourcedir specdir srcrpmdir swidtagdir sysconfdir sysctldir
