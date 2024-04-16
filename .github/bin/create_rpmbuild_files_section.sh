@@ -8,7 +8,8 @@ includedir infodir initddir initrddir ivyxmldir
 javaconfdir javadir javadocdir jnidir journalcatalogdir 
 jvmcommondatadir jvmcommonlibdir jvmcommonsysconfdir jvmdatadir jvmdir jvmlibdir jvmprivdir jvmsysconfdir
 libdir libexecdir localedir localstatedir 
-mandir mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir monogacdir oldincludedir
+mandir mavenpomdir metainfodir modprobedir modulesdir modulesloaddir monodir monogacdir
+oldincludedir
 pkgdocdir prefix presetdir
 rpmdir rpmluadir rpmmacrodir rundir
 sbindir sharedstatedir sourcedir specdir srcrpmdir swidtagdir sysconfdir sysctldir
