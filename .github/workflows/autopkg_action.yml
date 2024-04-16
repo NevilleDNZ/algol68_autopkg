@@ -101,11 +101,11 @@ jobs:
           output CRJ_PACKAGE_VERSION := "$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")"
 
           output CRJ_USER_UPSTREAM := "${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}"
-          output CRJ_PRJ_UPSTREAM :=  "${{ github.event.inputs.WFDP_PRJ_UPSTREAM  || 'algol68g-staging' }}"
+          output CRJ_PRJ_UPSTREAM :=  "${{ github.event.inputs.WFDP_PRJ_UPSTREAM  || 'algol68g' }}"
           output CRJ_INCLUDE_LIBS :=  "${{ github.event.inputs.WFDP_INCLUDE_LIBS  || 'full' }}"
-          output CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'force-preserve' }}"
+          output CRJ_AUTOTOOL_CONFIGURE := "${{ github.event.inputs.WFDP_AUTOTOOL_CONFIGURE || 'touch-now' }}"
           output CRJ_GPG_NAME := "NevilleDNZ:algol68:repo"
-          output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g-staging' }}"
+          output CRJ_PRJ := "${{ github.event.inputs.WFDP_PRJ_UPSTREAM   || 'algol68g' }}"
 
           output CRJ_draft := true
           output CRJ_prerelease := true
