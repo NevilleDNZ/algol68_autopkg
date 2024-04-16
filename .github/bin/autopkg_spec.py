@@ -673,7 +673,7 @@ Ubuntu22 full requires:
 
     template_of_sect_of_spec["head_set_dirs"]="""\
 ### {sec_name} ###
-#define _pkgdocdir #_defaultdocdir/%PACKAGE
+#define _pkgdocdir #_defaultdocdir/XPACKAGE
 %define configure_macro_builtins --bindir=%_bindir --sbindir=%_sbindir --includedir=%_includedir \
     --oldincludedir=%_oldincludedir --libdir=%_libdir --libexecdir=%_libexecdir --localstatedir=%_localstatedir \
     --datarootdir=%_datarootdir --datadir=%_datadir --sysconfdir=%_sysconfdir --mandir=%_mandir \
@@ -881,7 +881,7 @@ fi
             if file_l:
                 if "bin" in dir_name or "exec" in dir_name or dir_name in ["initddir","initrddir"]:
                     file_d["bin"]+=["%_"+dir_name+"/"+file for file in file_l if file and file != "None"]
-                elif "defaultdocdir" == dir_name:
+                elif "pkgdocdir" == dir_name:
                     file_d["doc"]+=["%doc "+file for file in file_l if file and file != "None"]
                 # elif "localedir" == dir_name:
                 # ToDo ... # %lang(fr) /usr/share/locale/fr/LC_MESSAGES/myapp.mo
