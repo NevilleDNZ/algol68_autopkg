@@ -535,7 +535,7 @@ URL: {opt_d.DOCUMENTATION_PAGE}
 %default_without remix  # force a remix .RPM to be build
 %default_without native # create remix pkg "as is", i.e. as per autotools on existing pkgs
 
-%default_withput check  # run `__make check` with std test suite
+%default_without check  # run `__make check` with std test suite
 
 # merge_extra_tools to help with cross-platform building publication ...
 %default_with    release
