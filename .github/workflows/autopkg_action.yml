@@ -145,7 +145,6 @@ jobs:
               --infodir "*" \
               --libdir "gawk/*" \
               --libexecdir "awk/*" \
-              --localedir "*/LC_MESSAGES/*" \
               --mandir "man?/*" \
               --includedir "*" \
               --sysconfdir "profile.d/*"
