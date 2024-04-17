@@ -6,12 +6,11 @@ name: dispatch local build
 #        a: { required: true, type: string}
 #        b: { required: true, type: string}
 #        c: { required: true, type: string}
-
 on:
-#     push:
-#       branches: [ "trunk" ] # , "devel", "feature-ubuntu-support" ]
-#     pull_request:
-#       branches: [ "trunk" ] # , "devel", "feature-ubuntu-support" ]
+    push:
+       branches: [ "develop" ]
+    pull_request:
+       branches: [ "develop" ]
 #   # https://gist.github.com/Daniel-ltw/552b90800b07c22e4a83dfa68ada6318 ...
 #     repository_dispatch:
 #       types:
@@ -34,7 +33,7 @@ on:
                 description: 'Upstream user (source of pkg)'
                 required: true
 #                default: 'NevilleDNZ'
-                default: 'NevilleDNZ-downstream'
+                default: 'NevilleDNZ'
                 type: choice
                 options:
                     - 'NevilleDNZ'
@@ -43,8 +42,8 @@ on:
             WFDP_PRJ_UPSTREAM:
                 description: 'Upstream project repo (source of pkg)'
                 required: true
-#                default: 'algol68g'
-                default: 'gawk-downstream'
+                default: 'algol68g'
+#                default: 'gawk-downstream'
                 type: choice
                 options:
                     - 'gawk'
@@ -68,7 +67,8 @@ on:
             WFDP_RELEASE_NAME:
                 description: 'Release to build'
                 required: true
-                default: '5.3.0'
+#                default: '5.3.0'
+                default: '3.5.1'
                 type: choice
                 options:
                     - '6.2.9'
@@ -121,7 +121,7 @@ on:
                     - '2.8.0'
                     - '2.8.1'
                     - '2.8.2'
-                    - '2.8.3'
+                    - '2.8.3''3.5.1'
                     - '2.8.4'
                     - '3.0.0'
                     - '3.0.1'

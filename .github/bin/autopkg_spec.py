@@ -510,8 +510,8 @@ URL: {opt_d.DOCUMENTATION_PAGE}
 # PC_bcond_without foo defines symbol with_foo if --without foo was *not*
 # specified on command line.
 
-%define default_without() %{lc}expand:%%{lc}?_with_%{lc}1{rc}:%%global with_%{lc}1{rc} 1{rc}{rc}
-%define default_with()    %{lc}expand:%%{lc}!?_without_%{lc}1{rc}:%%global with_%{lc}1{rc} 1{rc}{rc}
+%define Default_without() %{lc}expand:%%{lc}?_with_%{lc}1{rc}:%%global with_%{lc}1{rc} 1{rc}{rc}
+%define Default_with()    %{lc}expand:%%{lc}!?_without_%{lc}1{rc}:%%global with_%{lc}1{rc} 1{rc}{rc}
 
 # issue: `with_long-types` is not a valid m4 vaiable name, so hypens in option names will be ignored
 %define default_enable()  %{lc}expand:
@@ -529,18 +529,20 @@ URL: {opt_d.DOCUMENTATION_PAGE}
 {rc}
 
 # subpkg options
-%default_with tiny     # minimise what gets installed, avoiding errors on missing optional pkgs
-%default_without full        # try and install every pkg to get a "full" implentation
+%bcond_without tiny      # minimise what gets installed, avoiding errors on missing optional pkgs
+%bcond_with full   # try and install every pkg to get a "full" implentation
 
-%default_without remix    # force a remix .RPM to be build
-%default_without native   # create remix pkg "as is", i.e. as per autotools on existing pkgs
+%bcond_with remix  # force a remix .RPM to be build
+%bcond_with native # create remix pkg "as is", i.e. as per autotools on existing pkgs
+
+%bcond_with check  # run `__make check` with std test suite
 
 # merge_extra_tools to help with cross-platform building publication ...
-%default_with    release
+%bcond_without    release
 
 # build options
-%default_with quiet
-%default_with keep_scripts
+%bcond_without quiet
+%bcond_without keep_scripts
 
 # various constants
 %define __attr_r 0644
@@ -730,6 +732,18 @@ Configure options: %{SUBPACKAGE}_configure_opt_l
     template_of_sect_of_spec["prep"]="""\
 ### {sec_name} ###
 %prep
+echo with_tiny=%{lc}with_tiny{rc}
+echo without_tiny=%{lc}without_tiny{rc}
+echo with tiny=%{lc}with tiny{rc}
+
+echo with_full=%{lc}with_full{rc}
+echo without_full=%{lc}without_full{rc}
+echo with full=%{lc}with full{rc}
+
+echo with_check=%{lc}with_check{rc}
+echo without_check=%{lc}without_check{rc}
+echo with check=%{lc}with check{rc}
+
 %{lc}prelude -o 1 -s PREP_BUILD -n %PACKAGE{rc}
 
 ### {sec_name} ###
@@ -807,7 +821,7 @@ fi
 tarball_build_configure_make(){lc}
   if mkdir -p "$1" && cd "$1"; then
     %configure $configure_dirs "$@" &&
-    %{lc}make_build%{rc} %{lc}?make_flags{rc} %{lc}?_smp_mflags{rc} CFLAGS="$RPM_OPT_FLAGS"
+    %{lc}make_build{rc} %{lc}?make_flags{rc} %{lc}?_smp_mflags{rc} CFLAGS="$RPM_OPT_FLAGS"
   else
     %__error "tarball_build_configure_make cannot chdir '$1'"
   fi
@@ -935,7 +949,7 @@ rm -rf $RPM_BUILD_ROOT
 %check
 ### {sec_name} ###
 %if %{lc}with check{rc}
-__make check
+%__make check
 %else
 echo Check disabled
 %endif

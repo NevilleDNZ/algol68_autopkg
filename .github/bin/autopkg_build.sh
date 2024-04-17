@@ -31,8 +31,8 @@ if [ "$RUNNER_OS" == "Linux" ]; then
         tar -czf "$TOPDIR/SOURCES/$CRJ_PRJ-$CRJ_PACKAGE_VERSION.tar.gz" *
         SPEC="$CRJ_PRJ-$CRJ_PACKAGE_VERSION-$CRJ_BUILD.spec"
 
-        echo rpmbuild -ba --define "_topdir $TOPDIR" --with full --without tiny --build-in-place "$SPEC"
-        rpmbuild -ba --define "_topdir $TOPDIR" --with full --without tiny --build-in-place "$SPEC"
+        echo rpmbuild -ba --without check --without tiny --with full --build-in-place --define "_topdir $TOPDIR" "$SPEC"
+             rpmbuild -ba --without check --without tiny --with full --build-in-place --define "_topdir $TOPDIR" "$SPEC"
 
         OMJ_BUILT_SRC=$TOPDIR/SRPMS/$CRJ_PRJ-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".src.rpm
         OMJ_BUILT_BIN="$(echo $TOPDIR/RPMS/$OMJ_ARCH/$CRJ_PRJ-"$CRJ_PACKAGE_VERSION"-"$CRJ_BUILD"_"$OMJ_OS_RELEASE".$OMJ_ARCH.rpm)"
