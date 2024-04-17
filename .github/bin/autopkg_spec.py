@@ -732,17 +732,17 @@ Configure options: %{SUBPACKAGE}_configure_opt_l
     template_of_sect_of_spec["prep"]="""\
 ### {sec_name} ###
 %prep
-echo with_tiny=%{lc}with_tiny%{rc}
-echo without_tiny=%{lc}without_tiny%{rc}
-echo with_tiny=%{lc}with tiny%{rc}
+echo with_tiny=%{lc}with_tiny{rc}
+echo without_tiny=%{lc}without_tiny{rc}
+echo with_tiny=%{lc}with tiny{rc}
 
-echo with_full=%{lc}with_full%{rc}
-echo without_full=%{lc}without_full%{rc}
-echo with_full=%{lc}with full%{rc}
+echo with_full=%{lc}with_full{rc}
+echo without_full=%{lc}without_full{rc}
+echo with_full=%{lc}with full{rc}
 
-echo with_check=%{lc}with check%{rc}
-echo without_check=%{lc}without_check%{rc}
-echo with_check=%{lc}with check%{rc}
+echo with_check=%{lc}with check{rc}
+echo without_check=%{lc}without_check{rc}
+echo with_check=%{lc}with check{rc}
 
 %{lc}prelude -o 1 -s PREP_BUILD -n %PACKAGE{rc}
 
@@ -821,7 +821,7 @@ fi
 tarball_build_configure_make(){lc}
   if mkdir -p "$1" && cd "$1"; then
     %configure $configure_dirs "$@" &&
-    %{lc}make_build%{rc} %{lc}?make_flags{rc} %{lc}?_smp_mflags{rc} CFLAGS="$RPM_OPT_FLAGS"
+    %{lc}make_build{rc} %{lc}?make_flags{rc} %{lc}?_smp_mflags{rc} CFLAGS="$RPM_OPT_FLAGS"
   else
     %__error "tarball_build_configure_make cannot chdir '$1'"
   fi
