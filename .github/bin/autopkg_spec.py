@@ -733,15 +733,16 @@ Configure options: %{SUBPACKAGE}_configure_opt_l
 ### {sec_name} ###
 %prep
 echo with_tiny=%{lc}with_tiny%{rc}
-echo with_full=%{lc}with_full%{rc}
-echo with_remix=%{lc}with_remix%{rc}
-echo with_native=%{lc}with_native%{rc}
-echo with_native=%{lc}with_check%{rc}
+echo without_tiny=%{lc}without_tiny%{rc}
 echo with_tiny=%{lc}with tiny%{rc}
+
+echo with_full=%{lc}with_full%{rc}
+echo without_full=%{lc}without_full%{rc}
 echo with_full=%{lc}with full%{rc}
-echo with_remix=%{lc}with remix%{rc}
-echo with_native=%{lc}with native%{rc}
-echo with_native=%{lc}with check%{rc}
+
+echo with_check=%{lc}with check%{rc}
+echo without_check=%{lc}without_check%{rc}
+echo with_check=%{lc}with check%{rc}
 
 %{lc}prelude -o 1 -s PREP_BUILD -n %PACKAGE{rc}
 
