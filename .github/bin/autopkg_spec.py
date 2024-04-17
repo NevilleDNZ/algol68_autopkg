@@ -732,16 +732,16 @@ Configure options: %{SUBPACKAGE}_configure_opt_l
     template_of_sect_of_spec["prep"]="""\
 ### {sec_name} ###
 %prep
-echo with_tiny=%{with_tiny}
-echo with_full=%{with_full}
-echo with_remix=%{with_remix}
-echo with_native=%{with_native}
-echo with_native=%{with_check}
-echo with_tiny=%{with tiny}
-echo with_full=%{with full}
-echo with_remix=%{with remix}
-echo with_native=%{with native}
-echo with_native=%{with check}
+echo with_tiny=%{lc}with_tiny%{rc}
+echo with_full=%{lc}with_full%{rc}
+echo with_remix=%{lc}with_remix%{rc}
+echo with_native=%{lc}with_native%{rc}
+echo with_native=%{lc}with_check%{rc}
+echo with_tiny=%{lc}with tiny%{rc}
+echo with_full=%{lc}with full%{rc}
+echo with_remix=%{lc}with remix%{rc}
+echo with_native=%{lc}with native%{rc}
+echo with_native=%{lc}with check%{rc}
 
 %{lc}prelude -o 1 -s PREP_BUILD -n %PACKAGE{rc}
 
