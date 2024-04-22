@@ -335,12 +335,12 @@ Architecture: any
 Depends: ${lc}shlibs:Depends{rc}, ${lc}misc:Depends{rc}
 '''
 
-    template_of_sect["head"]='''\
+    if False: template_of_sect[subdir+"control"]='''\
 # Package-List: # ToDo
 '''
 
 # for eg-devel and libeg etc...
-    template_of_sect["capabilities/subpkg"]='''\
+    if False: template_of_sect[subdir+"control"]='''\
 #  exampleapp deb misc optional arch=any
 #  libexample deb libs optional arch=any
 #  libexample-dev deb libdevel optional arch=any
