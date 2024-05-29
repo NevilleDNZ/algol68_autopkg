@@ -2970,11 +2970,13 @@ AR_configure (){
     repo="$3"
     local in_token="$4"
 
-    for repo in "$CRR_REPO_LIST"; do
+    for repo in $CRR_REPO_LIST; do
         #CRR_OWNER=`dirname $repo`
         #CRR_REPO=`basenamename $repo`
         if [ "$in_token" = "" ]; then
-            token=$(gh api -X POST /repos/$repo/actions/runners/registration-token --jq .token)
+            user=`dirname $repo`
+            gh auth switch -u "$user"
+            token="$(gh api -X POST /repos/$repo/actions/runners/registration-token --jq .token)"
         else
             token="$in_token"
         fi
@@ -2995,7 +2997,7 @@ AR_run (){
     CRR_IP="$2"
     repo="$3"
 
-    for repo in "$CRR_REPO_LIST"; do
+    for repo in $CRR_REPO_LIST; do
         # set -x
         if ssh $OPT_ssh -n -f "$CRR_remote_builder@$CRR_IP" "
             cd $CRR_AR_DIR && {
@@ -3017,7 +3019,7 @@ AR_kill (){
     CRR_IP="$2"
     repo="$3"
 
-    for repo in "$CRR_REPO_LIST"; do
+    for repo in $CRR_REPO_LIST; do
         ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
             cd $CRR_AR_DIR &&
             exec ./runner_mgr.sh kill '$repo' '$VM_NAME'
@@ -3031,7 +3033,7 @@ AR_status (){
     CRR_IP="$2"
     repo="$3"
 
-    for repo in "$CRR_REPO_LIST"; do
+    for repo in $CRR_REPO_LIST; do
         ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
             cd $CRR_AR_DIR &&
             exec ./runner_mgr.sh status '$repo' '$VM_NAME'
@@ -3046,7 +3048,7 @@ AR_remove (){
     CRR_IP="$2"
     repo="$3"
     token="$4"
-    for repo in "$CRR_REPO_LIST"; do
+    for repo in $CRR_REPO_LIST; do
         echo ./runner_mgr.sh remove "$repo" "$VM_NAME"
 
         ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
@@ -3491,6 +3493,7 @@ run_on_each_vm(){
                 [ "$cmd" = "shutdown_vm" ] && break
                 # ssh $OPT_ssh root@$ip_address
                 # AR_prep_VM_inst "$CRR_hostname" "$ip_address"
+                echo ASSERT "$cmd" "$CRR_hostname" "$ip_address" $AR_TOKEN
                 ASSERT "$cmd" "$CRR_hostname" "$ip_address" $AR_TOKEN
             done
         }
@@ -3505,11 +3508,11 @@ run_on_each_vm(){
 #run_on_each_vm true shutdown_vm # installation phase 1
 
 #snapshot_all_vms # each VM is stopped, & DVD ejected for snapshot
+CRR_REPO_LIST=""
+CRR_REPO_LIST+="NevilleDNZ-downstream/repo_autopkg-downstream "
+CRR_REPO_LIST+="NevilleDNZ/repo_autopkg "
 
-CRR_REPO_LIST="NevilleDNZ-downstream/repo_autopkg-downstream"
-#CRR_REPO_LIST="NevilleDNZ/repo_autopkg"
-
-#run_on_each_vm AR_prep_VM_inst AR_configure AR_run AR_status
+run_on_each_vm AR_prep_VM_inst # AR_configure AR_run AR_status
 run_on_each_vm                 AR_configure AR_run AR_status
 #run_on_each_vm                  AR_run AR_status
 
