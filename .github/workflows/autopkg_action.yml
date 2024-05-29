@@ -193,7 +193,7 @@ jobs:
           #- debian11-aarch64
           #- raspbian12-armv7l
           - ubuntu-latest
-          - ubuntu-20.04
+          # - ubuntu-20.04
           #- fedora38-x86_64
           #- fedora39-x86_64
           - fedora40-x86_64
