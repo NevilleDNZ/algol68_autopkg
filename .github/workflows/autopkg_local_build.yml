@@ -68,7 +68,7 @@ on:
                 description: 'Release to build'
                 required: true
 #                default: '5.3.0'
-                default: '3.5.1'
+                default: '3.5.2'
                 type: choice
                 options:
                     - '6.2.9'
@@ -121,7 +121,7 @@ on:
                     - '2.8.0'
                     - '2.8.1'
                     - '2.8.2'
-                    - '2.8.3''3.5.1'
+                    - '2.8.3'
                     - '2.8.4'
                     - '3.0.0'
                     - '3.0.1'
