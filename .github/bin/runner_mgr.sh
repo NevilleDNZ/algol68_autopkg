@@ -8,7 +8,7 @@ OPT_curl=--progress-bar
 #UNTAR_DIR=untar
 
 SHR_RUNNERS=actions-runner
-SHR_AR_ROOT_ABS=$PWD
+SHR_AR_ROOT_ABS="$PWD"
 # SHR_RUNNERS=AR
 mkdir -p "$SHR_RUNNERS"
 
@@ -232,6 +232,7 @@ case "$cmd" in
         # set +x
         if mkdir -p "$SHR_AR_DIR" && cd "$SHR_AR_DIR"; then
             get_TOKEN "$3"
+            ASSERT [ ! -f TOKEN.txt ]
             echo "$SHR_TOKEN" > TOKEN.txt
 
             get_ar_url_version "$4"
@@ -251,6 +252,7 @@ case "$cmd" in
     (run) # cmd
         get_SHR_REPO_NAME "$1"
         get_SHR_RUNNER_NAME "$2"
+        echo run: SHR_AR_DIR="'$SHR_AR_DIR'"
         if cd $SHR_AR_DIR; then
             # Last step, run it!
             #$ASSERT ./run.sh
@@ -298,3 +300,4 @@ case "$cmd" in
     ;;
     (*) echo Huh...;;
 esac
+echo cmd: $0 $cmd $SHR_REPO_NAME $SHR_RUNNER_NAME $SHR_TOKEN
