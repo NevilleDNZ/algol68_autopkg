@@ -335,6 +335,17 @@ Architecture: any
 Depends: ${lc}shlibs:Depends{rc}, ${lc}misc:Depends{rc}
 '''
 
+    if False: template_of_sect[subdir+"control"]='''\
+# Package-List: # ToDo
+'''
+
+# for eg-devel and libeg etc...
+    if False: template_of_sect[subdir+"control"]='''\
+#  exampleapp deb misc optional arch=any
+#  libexample deb libs optional arch=any
+#  libexample-dev deb libdevel optional arch=any
+'''
+
     template_of_sect["capabilities/subpkg"]='''\
 # {SUBPACKAGE} requires:
 # Build-Depends: cdbs, debhelper (>= 10.0.0), autotools-dev, {dep_of_this_subpkg[DPKG_BuildRequiresPkg]}
@@ -1784,8 +1795,11 @@ if __name__ == "__main__":
         source_input_dir=".",
         build_staging_dir=".",
         insert_headings=False,
-        bindir=[], # "%package_alias".split(), #  %package_alias-{SUBPACKAGE}".split(),
-        includedir=[] # "%package_alias.h %package_alias-*.h".split(),
+        bindir=[],      # "%package_alias".split(), #  %package_alias-{SUBPACKAGE}".split(),
+        includedir=[],  # "%package_alias.h %package_alias-*.h".split(),
+        lib_subpkg=[],  # ToDo: put these runtime libraries in a seperate *-devel sub-package
+        devel_subpkg=[],# ToDo: put these rt lib headers in a seperate lib* sub-package, but dependant on the rt library 
+                        #       package. (Maybe include static libs, and vim/emacs/vscode developer tools)
     )
 # from `rpm --showrc`
 # for future rhel reference...

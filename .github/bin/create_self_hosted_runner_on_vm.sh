@@ -1,9 +1,14 @@
 #!/bin/bash
 
-#CRR_REPO="https://github.com/NevilleDNZ-downstream/algol68g-release-builder-downstream"
+#CRR_REPO_PATH="https://github.com/NevilleDNZ-downstream/algol68g-release-builder-downstream"
 CRR_REPO_URL="https://github.com"
-CRR_REPO="$CRR_REPO_URL/NevilleDNZ/repo_autopkg"
-CRR_REPO="$CRR_REPO_URL/NevilleDNZ-downstream/repo_autopkg-downstream"
+#CRR_REPO_PATH="$CRR_REPO_URL/NevilleDNZ/repo_autopkg"
+
+#CRR_OWNER=NevilleDNZ-downstream
+#CRR_REPO=repo_autopkg-downstream
+#CRR_REPO_PATH="$CRR_REPO_URL/$CRR_OWNER/$CRR_REPO"
+
+AR_TOKEN="" # set if you want already have one
 
 CRR_VM=qemu
 CRR_VM=kvm
@@ -95,11 +100,11 @@ NEED(){
 }
 
 cows_come_home=999
-
 WAIT_WHILE(){
     for((i=0; i<$cows_come_home; i++)); do
         TRACE "$@" || return "$?"
         sleep 6
+        NOTE waiting for "$@" to happen
     done
     return 0
 }
@@ -147,7 +152,8 @@ normalise_hostname(){
         s?^.*/??;
         s/?.*$//;
         s/[.]iso//;
-        s/-\(\(dvd\|DVD\)\(-*[0-9][0-9]*\)*\|disc[0-9]\|live\|boot\|minimal\|legacy\|desktop\|netinst\|live\|server\|NET\|Build[^-]*\|Media\|RELEASE\)//g;
+        s/-\(\(dvd\|DVD\)\(-*[0-9][0-9]*\)*\|disc[0-9]\|live\|boot\|minimal\|legacy\|desktop\|netinst\|live\|server\|NET\|Build[^-]*\|Media\|RELEASE\|torrent\)//g;
+        s/[.]torrent//g;
         s/\([a-zA-Z]\)/\L\1/g;
         s/\([a-z]\)-\([0-9]\)/\1\2/g;
         s/[^a-z0-9]/-/g;
@@ -163,6 +169,8 @@ review_hostnames(){
 
 
 OPT_v=""
+OPT_curl="-sS"
+OPT_curl=--progress-bar
 
 # Function to find the IP address associated with a VM's NIC MAC address # by ChatGPT
 get_ip_of_vm_nic() {
@@ -236,13 +244,13 @@ gen_pw (){
     # the next two lines are hint, actual PW differs...
     SALT=$(openssl rand -base64 12)
     c=`echo -n "VBOX-PW-salted" | openssl passwd -6 -salt "$SALT" -stdin` # Fake PW
-    ToDo: Add
+    # ToDo: Add
     . ~/.ssh/create_self_hosted_runner_on_vm.passwords # get ROOT_PW_IC and ROOT_PW_PT
 }
 
 HELP_update_os="$TODO"
 QQQupdate_os (){
-  true
+    true
 }
 
 HELP_create_kickstart="$TODO"
@@ -307,7 +315,7 @@ init 0
 %end
 
 EOF
-  true
+    true
 }
 
 create_kickstart_try1 (){
@@ -2616,12 +2624,28 @@ EOF
 
 HELP_get_upstream_os_iso="$TODO"
 get_upstream_os_iso (){
-    if [ ! -f "$CRR_local_iso" ]; then
-        TRACE curl -o "$CRR_local_iso" "$CRR_repo_iso"
-    fi
+    case "$CRR_local_iso" in
+        (*.torrent)
+            [ ! -f "$CRR_local_iso" ] && ASSERT curl $OPT_curl -o "$CRR_local_iso" "$CRR_repo_iso"
+            d=`dirname "$CRR_local_iso"`; b=`basename "$CRR_local_iso" .torrent`;
+            (   cd $d;
+                # rtorrent "$CRR_local_iso"; wait
+                TRACE aria2c --seed-time=0 "$CRR_local_iso" || [ "$?" != 13 ] && RAISE
+            )
+            CRR_torrent_iso=`ls -rtd $d/$b/*.iso | tail -1`
+            ln -fs $CRR_torrent_iso $d
+            CRR_local_iso=$d/`basename $CRR_torrent_iso`
+            ls -lrL $CRR_torrent_iso $CRR_local_iso
+            true
+        ;;
+        (*.iso)
+            [ ! -f "$CRR_local_iso" ] && TRACE curl $OPT_curl -o "$CRR_local_iso" "$CRR_repo_iso"
+        ;;
+        (*) RAISE "unknown OS ISO Image:" "$CRR_local_iso";;
+    esac
 
     if [ "$OPT_checksum"]; then
-        curl -o "$CRR_local_iso_checksum" "$CRR_repo_iso_checksum"
+        curl $OPT_curl -o "$CRR_local_iso_checksum" "$CRR_repo_iso_checksum"
 
         target_cs=`cat "$CRR_local_iso_checksum"`
         candidate_cs=`$checksum "$CRR_local_iso"`
@@ -2894,12 +2918,17 @@ shutdown_vm (){
 CRR_IR_LOG="AR_prep_VM_inst.log"
 OPT_ssh="-i $HOME/.ssh/$CRR_PTEKEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=no" # ToDo: we know the IP address locally
 
+# Function to get the GitHub Actions runner latest version
+get_latest_runner_version() {
+    gh api -X GET /repos/actions/runner/releases/latest --jq .tag_name | sed "s/^v//"
+}
+
 HELP_AR_prep_VM_inst="$TODO"
 AR_prep_VM_inst (){
     VM_NAME="$1"
     CRR_IP="$2"
     # https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners#prerequisiteshttps://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners#prerequisites
-    # $CRR_REPO/settings/actions/runners/new
+    # $CRR_REPO_PATH/settings/actions/runners/new
     # AR_prep_VM_inst on the VM
 
     # CRR_IP="$(get_ip_of_vm_nic $VM_NAME $CRR_NIC_NUM)"
@@ -2907,7 +2936,7 @@ AR_prep_VM_inst (){
 # Note: on ubuntu, the default login shell is /bin/sh, not bash.
     ssh $OPT_ssh "root@$CRR_IP" "
         dnf install -y tar # ToDo Needed for RHEL-minimum
-#        useradd -Um -u $CRR_UID -G adm,wheel -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder' 
+#        useradd -Um -u $CRR_UID -G adm,wheel -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder'
         useradd -Um -u $CRR_UID -G adm -s /usr/bin/bash -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder'
         cp -rp ~root/.ssh ~$CRR_remote_builder/
         chown -R '$CRR_remote_builder' ~$CRR_remote_builder/.ssh
@@ -2919,13 +2948,17 @@ AR_prep_VM_inst (){
 
     scp -p $OPT_ssh ~/bin/runner_mgr.sh "$CRR_remote_builder@$CRR_IP:"
 
+# Get the latest runner version
+    version=$(get_latest_runner_version)
+    
     ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
         mkdir -p $CRR_AR_DIR && cd $CRR_AR_DIR &&
         mv ../runner_mgr.sh . &&
-        ./runner_mgr.sh download &&
-        ./runner_mgr.sh installdependencies
+        ./runner_mgr.sh download $version &&
         true
     "
+#        ./runner_mgr.sh installdependencies 
+    true
 }
 
 
@@ -2935,16 +2968,25 @@ AR_configure (){
     VM_NAME="$1"
     CRR_IP="$2"
     repo="$3"
-    token="$4"
+    local in_token="$4"
 
-    for repo in "$CRR_REPO_LIST"; do
-        echo echo firefox "$CRR_REPO_URL/$repo/settings/actions/runners/new"
-
-        echo ./runner_mgr.sh configure "$repo" "$VM_NAME" $token
+    for repo in $CRR_REPO_LIST; do
+        #CRR_OWNER=`dirname $repo`
+        #CRR_REPO=`basenamename $repo`
+        if [ "$in_token" = "" ]; then
+            user=`dirname $repo`
+            gh auth switch -u "$user"
+            token="$(gh api -X POST /repos/$repo/actions/runners/registration-token --jq .token)"
+        else
+            token="$in_token"
+        fi
+        NOTE To manually get a fresh actions/runners token
+        NOTE firefox "$CRR_REPO_URL/$repo/settings/actions/runners/new"
+        NOTE cd $CRR_AR_DIR "&&" ./runner_mgr.sh configure "$repo" "$VM_NAME" $token
 
         ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
             mkdir -p $CRR_AR_DIR && cd $CRR_AR_DIR &&
-               ./runner_mgr.sh configure '$repo' '$VM_NAME' $token
+                ./runner_mgr.sh configure '$repo' '$VM_NAME' $token
             "
     done
 }
@@ -2955,12 +2997,12 @@ AR_run (){
     CRR_IP="$2"
     repo="$3"
 
-    for repo in "$CRR_REPO_LIST"; do
-        set -x
+    for repo in $CRR_REPO_LIST; do
+        # set -x
         if ssh $OPT_ssh -n -f "$CRR_remote_builder@$CRR_IP" "
             cd $CRR_AR_DIR && {
                 # for((i=1; i<36; i++)); do echo -n \$i.; sleep 1; done &
-                nohup ./runner_mgr.sh run '$repo' '$VM_NAME' & 
+                nohup ./runner_mgr.sh run '$repo' '$VM_NAME' &
                 for((j=36; j>0; j--)); do echo -n \$j.; sleep 1; done
             }
         "; then
@@ -2977,7 +3019,7 @@ AR_kill (){
     CRR_IP="$2"
     repo="$3"
 
-    for repo in "$CRR_REPO_LIST"; do
+    for repo in $CRR_REPO_LIST; do
         ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
             cd $CRR_AR_DIR &&
             exec ./runner_mgr.sh kill '$repo' '$VM_NAME'
@@ -2991,7 +3033,7 @@ AR_status (){
     CRR_IP="$2"
     repo="$3"
 
-    for repo in "$CRR_REPO_LIST"; do
+    for repo in $CRR_REPO_LIST; do
         ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
             cd $CRR_AR_DIR &&
             exec ./runner_mgr.sh status '$repo' '$VM_NAME'
@@ -3006,13 +3048,13 @@ AR_remove (){
     CRR_IP="$2"
     repo="$3"
     token="$4"
-    for repo in "$CRR_REPO_LIST"; do
+    for repo in $CRR_REPO_LIST; do
         echo ./runner_mgr.sh remove "$repo" "$VM_NAME"
 
         ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
             cd $CRR_AR_DIR &&
             ./runner_mgr.sh remove '$repo' '$VM_NAME' $token
-            " 
+            "
     done
 }
 
@@ -3165,14 +3207,16 @@ EOF
     case "$CRR_OS" in
         (fedora-x86_64)
             CRR_ver=39
+            CRR_ver=40
             CRR_version="$CRR_ver-1.5"
             CRR_machine="x86_64"
             CRR_machine_l="x86_64 arch64 ppc64le s390x" # Server
             CRR_inst_guide='https://fedoraproject.org/workstation/download'
-            CRR_repo_iso="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_machine/iso/Fedora-Everything-netinst-$CRR_machine-$CRR_version.iso"
-            CRR_repo_iso="https://gsl-syd.mm.fcix.net/fedora/linux/releases/$CRR_ver/Server/$CRR_machine/iso/Fedora-Server-dvd-$CRR_machine-$CRR_version.iso"
+            # CRR_repo_iso="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_machine/iso/Fedora-Everything-netinst-$CRR_machine-$CRR_version.iso"
+            # CRR_repo_iso="https://gsl-syd.mm.fcix.net/fedora/linux/releases/$CRR_ver/Server/$CRR_machine/iso/Fedora-Server-dvd-$CRR_machine-$CRR_version.iso"
             #             https://ap.edge.kernel.org/fedora/releases/test/40_Beta/Server/x86_64/iso/Fedora-Server-netinst-x86_64-40_Beta-1.10.iso
-            #             https://torrent.fedoraproject.org/torrents/Fedora-Server-dvd-x86_64-40_Beta.torrent
+            CRR_repo_iso="https://torrent.fedoraproject.org/torrents/Fedora-Server-dvd-x86_64-40.torrent"
+            #CRR_repo_iso="https://torrent.fedoraproject.org/torrents/Fedora-Server-dvd-x86_64-41_Beta.torrent"
             CRR_iso_size='?'
             CRR_repo_iso_checksum="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_machine/iso/Fedora-Everything-$CRR_version-$CRR_machine-CHECKSUM"
             checksum="sha256sum --ignore-missing -c"
@@ -3422,10 +3466,10 @@ build_all_custom_isos_and_vms(){
 snapshot_all_vms(){
     for CRR_OS in $CRR_OS_L; do
         setenv_target_vm
-        if is_vm_started "$CRR_hostname" "$CRR_NIC_NUM"; then 
-            shutdown_vm; 
+        if is_vm_started "$CRR_hostname" "$CRR_NIC_NUM"; then
+            shutdown_vm;
         fi
-        # WAIT_UNTIL is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM" &&         
+        # WAIT_UNTIL is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM" &&
         WAIT_WHILE is_vm_pingable "$CRR_hostname" "$CRR_NIC_NUM" || {
             sleep 6
             ASSERT VBoxManage storageattach "$VM_NAME" --storagectl 'IDE Controller' --port 0 --device 0 --type dvddrive --medium none
@@ -3449,30 +3493,32 @@ run_on_each_vm(){
                 [ "$cmd" = "shutdown_vm" ] && break
                 # ssh $OPT_ssh root@$ip_address
                 # AR_prep_VM_inst "$CRR_hostname" "$ip_address"
-                ASSERT "$cmd" "$CRR_hostname" "$ip_address"
+                echo ASSERT "$cmd" "$CRR_hostname" "$ip_address" $AR_TOKEN
+                ASSERT "$cmd" "$CRR_hostname" "$ip_address" $AR_TOKEN
             done
         }
         [ "$cmd" = "shutdown_vm" ] &&
             shutdown_vm &&
-               WAIT_UNTIL is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM" && echo stopped: "$CRR_hostname" "$CRR_NIC_NUM"
+                WAIT_UNTIL is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM" && echo stopped: "$CRR_hostname" "$CRR_NIC_NUM"
         # destroy_vm
     done
 }
 
-build_all_custom_isos_and_vms
-run_on_each_vm true shutdown_vm # installation phase 1
+#build_all_custom_isos_and_vms
+#run_on_each_vm true shutdown_vm # installation phase 1
 
-snapshot_all_vms # each VM is stopped, & DVD ejected for snapshot
+#snapshot_all_vms # each VM is stopped, & DVD ejected for snapshot
+CRR_REPO_LIST=""
+CRR_REPO_LIST+="NevilleDNZ-downstream/repo_autopkg-downstream "
+CRR_REPO_LIST+="NevilleDNZ/repo_autopkg "
 
-CRR_REPO_LIST="NevilleDNZ-download/repo_autopkg-download"
-#CRR_REPO_LIST="NevilleDNZ/repo_autopkg"
+run_on_each_vm AR_prep_VM_inst # AR_configure AR_run AR_status
+run_on_each_vm                 AR_configure AR_run AR_status
+#run_on_each_vm                  AR_run AR_status
 
-run_on_each_vm AR_prep_VM_inst AR_configure AR_run AR_status
-#run_on_each_vm                 AR_configure AR_run AR_status
-
-#run_on_each_vm AR_prep_VM_inst 
-#run_on_each_vm AR_run 
-#run_on_each_vm AR_kill 
+#run_on_each_vm AR_prep_VM_inst
+#run_on_each_vm AR_run
+#run_on_each_vm AR_kill
 #run_on_each_vm shutdown_vm # use shutdown_vm when you cannot run all vm's at once.
 
 #run_on_each_vm AR_prep_VM_inst
