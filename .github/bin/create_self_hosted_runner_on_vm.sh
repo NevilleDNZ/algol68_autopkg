@@ -3599,7 +3599,6 @@ SVR_ty_l="vbox bare github .qemu .kvm .vmware .docker .xen .aws"
 SVR_attr_name_l="\
 SVR_St SVR_OS SVR_ver SVR_Vv SVR_mach  SVR_addr SVR_ty  SVR_via colon SVR_Etc"
 SVR_attr_value_l_l="\"
-Do     raspbian    12 12      armv7l  pi2b11-deb12-armv7l-1g     bare adm_owner : etc. [o] 172.31.1.36
 Do     fedora      40 40      x86_64  -                          vbox adm_root  : +SR +NEI -NCD .AR
 Do     rhel         9  9.4    x86_64  localhost                  bare adm_root  : +SR -NEI .NCD .AR
 Do     rocky        9  9.4    aarch64 pi4b14-rocky9-4-aarch64-8g bare adm_rocky : etc. [r] pi4b14-rocky9-4-aarch64-8g/172.31.0.27
@@ -3609,6 +3608,8 @@ Do     debian      11 11      aarch64 pi4b14-deb11-aarch64-2g    bare adm_owner 
 all_SVR_attr_value_l_l="$SVR_attr_value_l_l"
 
 parked_SVR_attr_value_l_l="\
+Do     raspbian    12 12      armv7l  pi2b11-deb12-armv7l-1g     bare adm_owner : etc. [o] 172.31.1.36
+
 Doing  raspbian    11 11      armv6l  192.168.0.73    bare adm_owner : etc. [o] pi1b2-deb11-armv6l-512m
 Doing  raspbian    10 10      armv6l  192.168.0.72    bare adm_pi : etc. [p] pi1b1-raspbian10-armv6l-256m
 
