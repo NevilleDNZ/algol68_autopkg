@@ -100,18 +100,19 @@ download_action_runner() {
 get_ar_url_version() {
     # Determine OS and Architecture
     case "$(uname -s)" in
-        Linux*)     os=linux;;
-        Darwin*)    os=osx;;
-        MINGW*|MSYS*|CYGWIN*) os=win;;
-        *)
+        (Linux*)     os=linux;;
+        (Darwin*)    os=osx;;
+        (MINGW*|MSYS*|CYGWIN*) os=win;;
+        (*)
             echo "Unsupported OS."
             exit 1
     esac
 
     case "$(uname -m)" in
-        x86_64)     arch=x64;;
-        aarch64)    arch=arm64;;
-        *)
+        (x86_64)     arch=x64;;
+        (aarch64)    arch=arm64;;
+        (arm*)    arch=arm;;
+        (*)
             echo "Unsupported architecture."
             exit 1
     esac
@@ -166,7 +167,7 @@ WATCH=WATCH
 
 case "$(uname -m)" in
     (x86_64)MACH=x64;;
-    (armv7l|arm*)MACH=arm;;
+    (armv6l|armv7l|armhf|arm*)MACH=arm;;
     (aarch64)MACH=arm64;;
     (*)MACH=Huh;;
 esac

@@ -8,16 +8,22 @@ CRR_REPO_URL="https://github.com"
 #CRR_REPO=repo_autopkg-downstream
 #CRR_REPO_PATH="$CRR_REPO_URL/$CRR_OWNER/$CRR_REPO"
 
+#CRR_PTEKEY=id_rsa
+OPT_cert="-cert"
+OPT_cert=""
+ CRR_PTEKEY="id_ed25519_nevilled-sgr-a_devel-builder-sgr-a_farm_2024-310606"
+CRR_PUBKEYS="id_ed25519_nevilled-sgr-a_devel-builder-sgr-a_farm_2024-??0606$OPT_cert.pub"
+CRR_PUBKEY="$CRR_PTEKEY$OPT_cert.pub"
+
+authorized_keys="$HOME/.ssh/$CRR_PUBKEYS"
+
+# authorized_keys="$HOME/.ssh/id_ed25519_nevilled-sgr-a_devel-builder-sgr-a_farm_2024-*0606.pub"
+
 AR_TOKEN="" # set if you want already have one
 
-CRR_VM=qemu
-CRR_VM=kvm
-CRR_VM=vmware
-CRR_VM=docker
-CRR_VM=xen
-CRR_VM=vbox
-
 CRR_AR_DIR=AR
+CRR_VBOX_NIC_NUM=2
+CRR_SSH_PORT=22
 
 TODO="Under construction..."
 
@@ -25,6 +31,7 @@ TRUE="TrU"
 FALSE=""
 q="'"
 qq='"'
+NL=$'\n'
 
 WS0="[[:space:]]*"
 WS="[[:space:]]\+"
@@ -135,12 +142,12 @@ is_open_host_port(){
 }
 
 Is_up_vm_nic(){
-    ip=`get_ip_of_vm_nic $1`
+    ip=`get_ip_of_VBox_nic $1`
     ip_up_host $ip
 }
 
 Is_open_vm_port(){
-    ip=`get_ip_of_vm_nic $1`
+    ip=`get_ip_of_VBox_nic $1`
     is_open_host_port $ip $2
 }
 
@@ -152,7 +159,7 @@ normalise_hostname(){
         s?^.*/??;
         s/?.*$//;
         s/[.]iso//;
-        s/-\(\(dvd\|DVD\)\(-*[0-9][0-9]*\)*\|disc[0-9]\|live\|boot\|minimal\|legacy\|desktop\|netinst\|live\|server\|NET\|Build[^-]*\|Media\|RELEASE\|torrent\)//g;
+        s/-\(\(dvd\|DVD\)\(-*[0-9][0-9]*\)*\|disc[0-9]\|live\|boot\|minimal\|legacy\|desktop\|netinst\|live\|server\|NET\|Build[^-]*\|Media\|RELEASE\|torrent\|img\|xz\)//g;
         s/[.]torrent//g;
         s/\([a-zA-Z]\)/\L\1/g;
         s/\([a-z]\)-\([0-9]\)/\1\2/g;
@@ -172,22 +179,22 @@ OPT_v=""
 OPT_curl="-sS"
 OPT_curl=--progress-bar
 
-# Function to find the IP address associated with a VM's NIC MAC address # by ChatGPT
-get_ip_of_vm_nic() {
+# Function to find the IP address associated with a SVR's NIC MAC address # by ChatGPT
+get_ip_of_VBox_nic() {
     local vm_name="$1"
     local nic_number="$2"
     #ASSERT [ -n "$vm_name" ]
     #ASSERT [ -n "$nic_number" ]
     local subnet_l="192.168.56.174/24" # Define your subnet list here
 
-    # Retrieve the MAC address for the specified NIC of the VM
+    # Retrieve the MAC address for the specified NIC of the SVR
     mac_address=$(VBoxManage showvminfo "$vm_name" --machinereadable | grep "macaddress$nic_number" | cut -d'"' -f2 | tr '[:upper:]' '[:lower:]')
 
     if [[ -n "$mac_address" ]]; then
-        [ -n "$OPT_v" ] && echo "MAC address for VM $vm_name is: $mac_address"
+        [ -n "$OPT_v" ] && echo "MAC address for SVR $vm_name is: $mac_address"
         # echo $mac_address
     else
-        [ -n "$OPT_v" ] && echo "No MAC address found for VM $vm_name." 1>&2
+        [ -n "$OPT_v" ] && echo "No MAC address found for SVR $vm_name." 1>&2
         return 1
     fi
 
@@ -197,18 +204,18 @@ get_ip_of_vm_nic() {
     [ -n "$OPT_v" ] && echo "Scanning for MAC address $mac_address in subnet $subnet_l..." 1>&2
 
     # Use ip neigh to find the IP address associated with the MAC address
-    ip_address=$(ip neigh | awk "/$mac_address/"'{print $1}')
-    if [ "$ip_address" == "" ]; then
+    SVR_addr=$(ip neigh | awk "/$mac_address/"'{print $1}')
+    if [ "$SVR_addr" == "" ]; then
     # Scan the subnet with nmap to populate the ARP table
         for subnet in $subnet_l; do
             nmap -sn $subnet > /dev/null 2>&1
         done
-        ip_address=$(ip neigh | awk "/$mac_address/"'{print $1}')
+        SVR_addr=$(ip neigh | awk "/$mac_address/"'{print $1}')
     fi
 
-    if [[ -n "$ip_address" ]]; then
-        [ -n "$OPT_v" ] && echo "IP address for MAC $mac_address is: $ip_address"
-        echo $ip_address
+    if [[ -n "$SVR_addr" ]]; then
+        [ -n "$OPT_v" ] && echo "IP address for MAC $mac_address is: $SVR_addr"
+        echo $SVR_addr
     else
         [ -n "$OPT_v" ] && echo "No IP address found for MAC $mac_address." 1>&2
         return 1
@@ -218,7 +225,7 @@ get_ip_of_vm_nic() {
 }
 
 # Example usage:
-# get_ip_of_vm_nic "VM name" 1
+# get_ip_of_VBox_nic "SVR name" 1
 
 local_downloads="$HOME/Downloads"
 local_tmpdir="$local_downloads/tmp"
@@ -227,14 +234,19 @@ CRR_UID=`id -u`
 CRR_local_depatcher=`id -un` # user name
 CRR_GID=`id -g` # not sure UID/GID is avaliable on all OSes
 
+((CRR_UID+=1))
+((CRR_GID+=1))
+
 CRR_remote_admin=`id -un`adm # user name
 CRR_remote_builder=`id -un`bld # user name
 
-CRR_PTEKEY=id_rsa
-CRR_PUBKEY=$CRR_PTEKEY.pub
-
-get_CRR_PUBKEY(){
+cat_CRR_PUBKEY(){
     cat ~/.ssh/$CRR_PUBKEY
+}
+
+cat_CRR_PUBKEYS(){
+    # cat ~/.ssh/$CRR_PUBKEY
+    cat ~/.ssh/$CRR_PUBKEYS
 }
 
 CRR_timezone="Australia/Brisbane"
@@ -243,7 +255,7 @@ HELP_gen_pw="$TODO"
 gen_pw (){
     # the next two lines are hint, actual PW differs...
     SALT=$(openssl rand -base64 12)
-    c=`echo -n "VBOX-PW-salted" | openssl passwd -6 -salt "$SALT" -stdin` # Fake PW
+    c="`echo -n "VBOX-PW-salted" | openssl passwd -6 -salt "$SALT" -stdin`" # Fake PW
     # ToDo: Add
     . ~/.ssh/create_self_hosted_runner_on_vm.passwords # get ROOT_PW_IC and ROOT_PW_PT
 }
@@ -301,7 +313,7 @@ kexec-tools
 %post
 mkdir -p /root/.ssh
 chmod 700 /root/.ssh
-echo '`get_CRR_PUBKEY`' >> /root/.ssh/authorized_keys
+echo '`cat_CRR_PUBKEYS`' >> /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
 echo -n "NOTE: host's ED25519 key fingerprint is:"
 ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub
@@ -1554,7 +1566,7 @@ create_autoyast (){
             #!/bin/sh
             mkdir -p /root/.ssh
             chmod 700 /root/.ssh
-            echo '`get_CRR_PUBKEY`' >> /root/.ssh/authorized_keys
+            echo '`cat_CRR_PUBKEYS`' >> /root/.ssh/authorized_keys
             chmod 600 /root/.ssh/authorized_keys
             chown root:root /root/.ssh/authorized_keys
             ]]>
@@ -1621,7 +1633,7 @@ EOF
 HELP_create_install_script="$TODO"
 create_install_script (){
     gen_pw
-    case "$CRR_OS" in
+    case "$SVR_OS-$SVR_mach" in
         (rhel-x86_64|rocky-x86_64|centos-x86_64|rhel-like-x86_64)
             CRR_kickstart_Installer="$TMP_WORKDIR_prep_iso/ks.cfg" # kickstart
             create_kickstart
@@ -1680,7 +1692,7 @@ create_install_script (){
         (freebsd-amd64)
             true # ToDo - a shell script maybe?
         ;;
-        (*)echo Huh: "$CRR_OS"; RAISE;;
+        (*)echo Huh: "$SVR_OS"; RAISE;;
     esac
     true
 }
@@ -1688,7 +1700,7 @@ create_install_script (){
 HELP_modify_boot_menu=""$TODO""
 modify_boot_menu (){
 
-    case "$CRR_OS" in
+    case "$SVR_OS-$SVR_mach" in
         (rhel-x86_64|rocky-x86_64|centos-x86_64|rhel-like-x86_64)
             modify_kickstart_grub_isolinux_cfg
         ;;
@@ -1746,7 +1758,7 @@ modify_kickstart_grub_isolinux_cfg (){ # kick start on RHEL, Centos and Rocky
 #  menu default
 #  kernel vmlinuz
 #  append initrd=initrd.img inst.stage2=hd:LABEL=RHEL-9-3-0-BaseOS-x86_64 quiet ks=cdrom:/ks.cfg
-    FROM="inst.stage2=hd:LABEL=RHEL-9-3-0-BaseOS-$CRR_machine quiet"
+    FROM="inst.stage2=hd:LABEL=RHEL-9-3-0-BaseOS-$CRR_mach quiet"
     FROM="inst.stage2=hd:LABEL=$CRR_ISO_LABEL quiet "
     FROM=" inst.stage2=hd:.* quiet *"
     TO=" "
@@ -1792,7 +1804,7 @@ modify_kickstart_grub_isolinux_cfg (){ # kick start on RHEL, Centos and Rocky
 HELP_modify_kickstart_grub2_cfg=""$TODO""
 modify_kickstart_grub2_cfg (){ # kickstart on fedora
 # boot/grub2/grub.cfg
-    #FROM="inst.stage2=hd:LABEL=RHEL-9-3-0-BaseOS-$CRR_machine quiet"
+    #FROM="inst.stage2=hd:LABEL=RHEL-9-3-0-BaseOS-$CRR_mach quiet"
     #FROM="inst.stage2=hd:LABEL=$CRR_ISO_LABEL quiet "
     FROM="linux /images/pxeboot/vmlinuz inst.stage2=hd:LABEL=Fedora-E-dvd-x86_64-39 quiet"
     #FROM=" inst.stage2=hd:.* quiet *"
@@ -2412,7 +2424,7 @@ d-i finish-install/reboot_in_progress note
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
 d-i preseed/late_command string \\
     in-target mkdir -p /root/.ssh; \\
-    in-target sh -c 'echo `get_CRR_PUBKEY` >> /root/.ssh/authorized_keys'; \\
+    in-target sh -c "echo '`cat_CRR_PUBKEYs`' >> /root/.ssh/authorized_keys"; \\
     in-target chmod 600 /root/.ssh/authorized_keys; \\
     in-target chown root:root /root/.ssh/authorized_keys
 EOF
@@ -2490,7 +2502,7 @@ autoinstall:
     install-server: true
     authorized-keys:
 #     - ssh-rsa AAAA... your@key
-      - `get_CRR_PUBKEY`
+      - `cat_CRR_PUBKEY`
     allow-pw: false
   kernel:
     package: linux-generic
@@ -2591,15 +2603,15 @@ autoinstall:
   runcmd:
     - mkdir -p /target/root/.ssh
     - chmod 700 /target/root/.ssh
-    - echo '`get_CRR_PUBKEY`' >>  /target/root/QQQ_rc
-    - echo '`get_CRR_PUBKEY`' >>  /target/root/.ssh/authorized_keys
+    - echo '`cat_CRR_PUBKEYS`' >>  /target/root/QQQ_rc
+    - echo '`cat_CRR_PUBKEYS`' >>  /target/root/.ssh/authorized_keys
     - chmod 600 /target/root/.ssh/authorized_keys
     - chown root:root /target/root/.ssh /target/root/.ssh/authorized_keys
   late-commands:
     - mkdir -p /target/root/.ssh
     - chmod 700 /target/root/.ssh
-    - echo '`get_CRR_PUBKEY`' >>  /target/root/QQQ_lc
-    - echo '`get_CRR_PUBKEY`' >>  /target/root/.ssh/authorized_keys
+    - echo '`cat_CRR_PUBKEYS`' >>  /target/root/QQQ_lc
+    - echo '`cat_CRR_PUBKEYS`' >>  /target/root/.ssh/authorized_keys
     - chmod 600 /target/root/.ssh/authorized_keys
     - chown root:root /target/root/.ssh /target/root/.ssh/authorized_keys
 #    - echo -n NOTE: hosts ED25519 key fingerprint is:
@@ -2615,7 +2627,7 @@ autoinstall:
 #    - default
 #    - name: root
 #      ssh-authorized-keys:
-#        - `get_CRR_PUBKEY`
+#        - `cat_CRR_PUBKEY`
 #      sudo: ALL=(ALL) NOPASSWD:ALL
 #      groups: sudo
 #      shell: /bin/bash
@@ -2723,7 +2735,7 @@ CD "$TMP_WORKDIR_prep_iso" || RAISE
 # The -volset option is used to specify the Volume Set Name of the ISO image.
 #ASSERT genisoimage -U -r -v -T -J -joliet-long -V "$CRR_rel" -volset "$CRR_rel" -A "$CRR_rel" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot -o "$CUSTOM_ISO" .
 
-case "$CRR_OS" in
+case "$SVR_OS-$SVR_mach" in
     (rhel-x86_64|rocky-x86_64|centos-x86_64|rhel-like-x86_64)
         CRR_BOOT_CAT="-c isolinux/boot.cat"
         CRR_BOOT_LINUX="-b isolinux/isolinux.bin"
@@ -2822,8 +2834,8 @@ destroy_custom_iso (){
     TRACE rm "$CUSTOM_ISO"
 }
 
-HELP_create_custom_vm="$TODO"
-create_custom_vm (){
+HELP_create_custom_SVR="$TODO"
+create_custom_SVR (){
 # Define variables
     HDD_SIZE=64000  # Size in MB (64GB)
     RAM_SIZE=2048   # Size in MB (2GB)
@@ -2831,91 +2843,104 @@ create_custom_vm (){
     RAM_SIZE=1024   # Size in MB (1GB)
     VRDE_PORT=3390  # Remote desktop port, change if needed
 
-    # Create the VM
-    TRACE VBoxManage createvm --name "$VM_NAME" --ostype "$CRR_type" --register
+    # Create the SVR
+    TRACE VBoxManage createvm --name "$SVR_NAME" --ostype "$CRR_type" --register
 
     # Set memory and network
-    TRACE VBoxManage modifyvm "$VM_NAME" --memory "$RAM_SIZE" --vram 128 --ioapic on
-    TRACE VBoxManage modifyvm "$VM_NAME" --nic1 nat
+    TRACE VBoxManage modifyvm "$SVR_NAME" --memory "$RAM_SIZE" --vram 128 --ioapic on
+    TRACE VBoxManage modifyvm "$SVR_NAME" --nic1 nat
 
     # Create a virtual hard disk
-    TRACE VBoxManage createhd --filename "$HOME/VirtualBox VMs/$VM_NAME/$VM_NAME.vdi" --size $HDD_SIZE
+    TRACE VBoxManage createhd --filename "$HOME/VirtualBox VMs/$SVR_NAME/$SVR_NAME.vdi" --size $HDD_SIZE
 
     # Attach the hard disk and ISO
-    TRACE VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAhci
-    TRACE VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --medium "$HOME/VirtualBox VMs/$VM_NAME/$VM_NAME.vdi"
-    TRACE VBoxManage storagectl "$VM_NAME" --name "IDE Controller" --add ide
+    TRACE VBoxManage storagectl "$SVR_NAME" --name "SATA Controller" --add sata --controller IntelAhci
+    TRACE VBoxManage storageattach "$SVR_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --medium "$HOME/VirtualBox VMs/$SVR_NAME/$SVR_NAME.vdi"
+    TRACE VBoxManage storagectl "$SVR_NAME" --name "IDE Controller" --add ide
 
-    #TRACE VBoxManage storageattach "$VM_NAME" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "$CRR_local_iso"
-    TRACE VBoxManage storageattach "$VM_NAME" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "$CRR_local_custom_iso"
+    #TRACE VBoxManage storageattach "$SVR_NAME" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "$CRR_local_iso"
+    TRACE VBoxManage storageattach "$SVR_NAME" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "$CRR_local_custom_iso"
 
-    # Setup the graphics controller of the specified VM to VMSVGA
-    TRACE VBoxManage modifyvm "$VM_NAME" --graphicscontroller vmsvga
+    # Setup the graphics controller of the specified SVR to VMSVGA
+    TRACE VBoxManage modifyvm "$SVR_NAME" --graphicscontroller vmsvga
 
-    TRACE VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled" "0"
+    TRACE VBoxManage setextradata "$SVR_NAME" "VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled" "0"
 
     # Setup Virtual Remote Desktop (Optional)
-    #TRACE VBoxManage modifyvm "$VM_NAME" --vrde on
-    #TRACE VBoxManage modifyvm "$VM_NAME" --vrdeport $VRDE_PORT
+    #TRACE VBoxManage modifyvm "$SVR_NAME" --vrde on
+    #TRACE VBoxManage modifyvm "$SVR_NAME" --vrdeport $VRDE_PORT
 
     netname=vboxnet0 nic=2
     VBoxManage list hostonlyifs | ( grep $netname || TRACE VBoxManage hostonlyif create )
 
-    TRACE VBoxManage modifyvm "$VM_NAME" --hostonlyadapter$nic $netname
-    TRACE VBoxManage modifyvm "$VM_NAME" --nic$nic hostonly
+    TRACE VBoxManage modifyvm "$SVR_NAME" --hostonlyadapter$nic $netname
+    TRACE VBoxManage modifyvm "$SVR_NAME" --nic$nic hostonly
 
-    echo "VM '$VM_NAME' created and configured."
+    echo "SVR '$SVR_NAME' created and configured."
 }
 
-HELP_snapshot_vm="$TODO"
-snapshot_vm (){
-    # snapshot the VM
+HELP_snapshot_SVR="$TODO"
+snapshot_SVR (){
+    # snapshot the SVR
 
-    # Replace this with your VM name
-    # VM_NAME="Your_VM_Name"
+    # Replace this with your SVR name
+    # SVR_NAME="Your_SVR_Name"
 
     # The snapshot name to check for; $1, else vanilla
     SNAPSHOT_NAME="${1:-vanilla}"
 
-    # Check if the snapshot exists
-    if VBoxManage snapshot "$VM_NAME" list | grep -q "$SNAPSHOT_NAME"; then
-        echo "Snapshot '$SNAPSHOT_NAME' already exists for VM '$VM_NAME'."
-    else
-        echo "Snapshot '$SNAPSHOT_NAME' does not exist. Creating snapshot..."
-        TRACE VBoxManage snapshot "$VM_NAME" take "$SNAPSHOT_NAME" --pause
-        echo "Snapshot '$SNAPSHOT_NAME' created successfully."
-    fi
-
+    case "$SVR_ty" in
+        (vbox)
+            # Check if the snapshot exists
+            if VBoxManage snapshot "$SVR_NAME" list | grep -q "$SNAPSHOT_NAME"; then
+                echo "Snapshot '$SNAPSHOT_NAME' already exists for SVR '$SVR_NAME'."
+            else
+                echo "Snapshot '$SNAPSHOT_NAME' does not exist. Creating snapshot..."
+                TRACE VBoxManage snapshot "$SVR_NAME" take "$SNAPSHOT_NAME" --pause
+                echo "Snapshot '$SNAPSHOT_NAME' created successfully."
+            fi
+        ;;
+        (bare)true;; # need a operator to backup??
+        (*)RAISE snapshot: unknown SVR_ty: $SVR_ty;;
+    esac
 }
 
-HELP_clone_vm="$TODO"
-clone_vm (){
-    # clone the VM
-    TRACE VBoxManage clonevm "$VM_NAME" # ToDo
+HELP_clone_SVR="$TODO"
+depr_clone_SVR (){
+    # clone the SVR
+    TRACE VBoxManage clonevm "$SVR_NAME" # ToDo
 }
 
-HELP_start_vm="$TODO"
-start_vm (){
-    # start the VM
-    TRACE VBoxManage startvm "$VM_NAME"
+HELP_start_SVR="$TODO"
+start_SVR (){
+    # start the SVR
+    case "$SVR_ty" in
+        (vbox)TRACE VBoxManage startvm "$SVR_NAME";;
+        (bare)true;; # need a webhook to re-poweron??
+        (*)RAISE start: unknown SVR_ty: $SVR_ty;;
+    esac
 }
 
-HELP_installation_phase_two="shutdown_vm, remove_DVD, start_vm - so as not to reinstall OS"
+HELP_installation_phase_two="shutdown_SVR, remove_DVD, start_SVR - so as not to reinstall OS"
 installation_phase_two (){
-    # start the VM
-    shutdown_vm
-    #TRACE VBoxManage storageattach "$VM_NAME" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "$CRR_local_custom_iso"
-    TRACE VBoxManage storageattach "$VM_NAME" --storagectl 'IDE Controller' --port 0 --device 0 --type dvddrive --medium none
-    start_vm
+    # start the SVR
+    shutdown_SVR
+    #TRACE VBoxManage storageattach "$SVR_NAME" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "$CRR_local_custom_iso"
+    TRACE VBoxManage storageattach "$SVR_NAME" --storagectl 'IDE Controller' --port 0 --device 0 --type dvddrive --medium none
+    start_SVR
 }
 
-HELP_shutdown_vm="$TODO"
-shutdown_vm (){
-    # stop the VM
-    TRACE VBoxManage controlvm "$VM_NAME" acpipowerbutton
+HELP_shutdown_SVR="$TODO"
+shutdown_SVR (){
+    # stop the SVR
+    case "$SVR_ty" in
+        (vbox)TRACE VBoxManage controlvm "$SVR_NAME" acpipowerbutton;;
+        (bare)NOTE Manually check "$SVR_NAME" is powered up;;
+        (*)RAISE shutdown: unknown SVR_ty: $SVR_ty;;
+    esac
 }
 
-CRR_IR_LOG="AR_prep_VM_inst.log"
+CRR_IR_LOG="AR_prep_SVR.log"
 OPT_ssh="-i $HOME/.ssh/$CRR_PTEKEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=no" # ToDo: we know the IP address locally
 
 # Function to get the GitHub Actions runner latest version
@@ -2923,26 +2948,59 @@ get_latest_runner_version() {
     gh api -X GET /repos/actions/runner/releases/latest --jq .tag_name | sed "s/^v//"
 }
 
-HELP_AR_prep_VM_inst="$TODO"
-AR_prep_VM_inst (){
-    VM_NAME="$1"
+adm_root(){
+    ASSERT ssh $OPT_ssh "root@$CRR_IP" "$@"
+}
+
+ssh_builder(){
+    ASSERT ssh  $OPT_ssh "$CRR_remote_builder@$CRR_IP" "$@"
+}
+
+adm_via(){
+    admin="$1"; shift
+    echo_Q ARGL="$@"
+    TRACE ssh $OPT_ssh "$admin@$CRR_IP" sudo bash -c "$qq$*$qq"
+}
+
+adm_owner(){
+    adm_via owner "$@"
+}
+
+adm_pi(){
+    adm_via pi "$@"
+}
+
+adm_rocky(){
+    adm_via rocky "$@"
+}
+
+HELP_AR_prep_SVR="setup $CRR_remote_builder; scp ./runner_mgr.sh; install self hosting SW"
+AR_prep_SVR (){
+    SVR_NAME="$1"
     CRR_IP="$2"
     # https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners#prerequisiteshttps://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners#prerequisites
     # $CRR_REPO_PATH/settings/actions/runners/new
-    # AR_prep_VM_inst on the VM
+    # AR_prep_SVR on the SVR
 
-    # CRR_IP="$(get_ip_of_vm_nic $VM_NAME $CRR_NIC_NUM)"
+    # CRR_IP="$(get_ip_of_VBox_nic $SVR_NAME $CRR_VBOX_NIC_NUM)"
 
 # Note: on ubuntu, the default login shell is /bin/sh, not bash.
-    ssh $OPT_ssh "root@$CRR_IP" "
+    # $SVR_via "whoami; id -a; uname -a; logname"
+    ALLOW_SUDO="$CRR_remote_builder ALL=(ALL:ALL) NOPASSWD: ALL"
+
+    $SVR_via "id -a; uname -a; id -a; set -x
         dnf install -y tar # ToDo Needed for RHEL-minimum
 #        useradd -Um -u $CRR_UID -G adm,wheel -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder'
         useradd -Um -u $CRR_UID -G adm -s /usr/bin/bash -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder'
-        cp -rp ~root/.ssh ~$CRR_remote_builder/
-        chown -R '$CRR_remote_builder' ~$CRR_remote_builder/.ssh
-        ALLOW_SUDO='$CRR_remote_builder ALL=(ALL:ALL) NOPASSWD: ALL'
-        grep -q $qq\$ALLOW_SUDO$qq '/etc/sudoers.d/$CRR_remote_builder' ||
-            echo $qq\$ALLOW_SUDO$qq >> '/etc/sudoers.d/$CRR_remote_builder'
+        # cp -rp ~root/.ssh ~$CRR_remote_builder/
+        mkdir -p ~$CRR_remote_builder/.ssh
+        touch ~$CRR_remote_builder/.ssh/authorized_keys
+        chmod -R go-rwx ~$CRR_remote_builder/.ssh
+        chown -R $CRR_remote_builder ~$CRR_remote_builder/.ssh
+        echo '`cat $authorized_keys`' >> ~$CRR_remote_builder/.ssh/authorized_keys
+        ALLOW_SUDO='$ALLOW_SUDO'
+        grep -q $q$ALLOW_SUDO$q '/etc/sudoers.d/$CRR_remote_builder' ||
+            echo $q$ALLOW_SUDO$q >> '/etc/sudoers.d/$CRR_remote_builder'
         chmod go-rwx '/etc/sudoers.d/$CRR_remote_builder'
       "
 
@@ -2950,22 +3008,22 @@ AR_prep_VM_inst (){
 
 # Get the latest runner version
     version=$(get_latest_runner_version)
-    
-    ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+
+    ssh_builder "
         mkdir -p $CRR_AR_DIR && cd $CRR_AR_DIR &&
         mv ../runner_mgr.sh . &&
         ./runner_mgr.sh download $version &&
         true
     "
-#        ./runner_mgr.sh installdependencies 
+#        ./runner_mgr.sh installdependencies
     true
 }
 
 
-HELP_AR_configure="$TODO"
-AR_configure (){
+HELP_AR_configure_runners_repo_at_SVR="$TODO"
+AR_configure_runners_repo_at_SVR (){
 
-    VM_NAME="$1"
+    SVR_NAME="$1"
     CRR_IP="$2"
     repo="$3"
     local in_token="$4"
@@ -2982,18 +3040,18 @@ AR_configure (){
         fi
         NOTE To manually get a fresh actions/runners token
         NOTE firefox "$CRR_REPO_URL/$repo/settings/actions/runners/new"
-        NOTE cd $CRR_AR_DIR "&&" ./runner_mgr.sh configure "$repo" "$VM_NAME" $token
+        NOTE cd $CRR_AR_DIR "&&" ./runner_mgr.sh configure "$repo" "$SVR_NAME" $token
 
-        ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+        ssh_builder "
             mkdir -p $CRR_AR_DIR && cd $CRR_AR_DIR &&
-                ./runner_mgr.sh configure '$repo' '$VM_NAME' $token
+                ./runner_mgr.sh configure '$repo' '$SVR_NAME' $token
             "
     done
 }
 
-HELP_AR_run="$TODO"
-AR_run (){
-    VM_NAME="$1"
+HELP_AR_run_runners_repo_at_SVR="$TODO"
+AR_run_runners_repo_at_SVR (){
+    SVR_NAME="$1"
     CRR_IP="$2"
     repo="$3"
 
@@ -3002,71 +3060,72 @@ AR_run (){
         if ssh $OPT_ssh -n -f "$CRR_remote_builder@$CRR_IP" "
             cd $CRR_AR_DIR && {
                 # for((i=1; i<36; i++)); do echo -n \$i.; sleep 1; done &
-                nohup ./runner_mgr.sh run '$repo' '$VM_NAME' &
+                nohup ./runner_mgr.sh run '$repo' '$SVR_NAME' &
                 for((j=36; j>0; j--)); do echo -n \$j.; sleep 1; done
             }
         "; then
-            echo OK: "nohup ./runner_mgr.sh run '$repo' '$VM_NAME'"
+            echo OK: "nohup ./runner_mgr.sh run '$repo' '$SVR_NAME'"
         else
-            echo Huh: "nohup ./runner_mgr.sh run '$repo' '$VM_NAME'"
+            echo Huh: "nohup ./runner_mgr.sh run '$repo' '$SVR_NAME'"
         fi
     done
 }
 
-HELP_AR_kill="$TODO"
-AR_kill (){
-    VM_NAME="$1"
+HELP_AR_kill_runners_repo_at_SVR="$TODO"
+AR_kill_runners_repo_at_SVR (){
+    SVR_NAME="$1"
     CRR_IP="$2"
     repo="$3"
 
     for repo in $CRR_REPO_LIST; do
-        ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+        ssh_builder "
             cd $CRR_AR_DIR &&
-            exec ./runner_mgr.sh kill '$repo' '$VM_NAME'
+            exec ./runner_mgr.sh kill '$repo' '$SVR_NAME'
         "
     done
 }
 
-HELP_AR_status="$TODO"
-AR_status (){
-    VM_NAME="$1"
+HELP_AR_status_runners_repo_at_SVR="$TODO"
+AR_status_runners_repo_at_SVR (){
+    SVR_NAME="$1"
     CRR_IP="$2"
     repo="$3"
 
     for repo in $CRR_REPO_LIST; do
-        ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+        ssh_builder "
             cd $CRR_AR_DIR &&
-            exec ./runner_mgr.sh status '$repo' '$VM_NAME'
+            exec ./runner_mgr.sh status '$repo' '$SVR_NAME'
         "
         true
     done
 }
 
-HELP_AR_remove="$TODO"
-AR_remove (){
-    VM_NAME="$1"
+HELP_AR_remove_runners_repo_at_SVR="$TODO"
+AR_remove_runners_repo_at_SVR (){
+    SVR_NAME="$1"
     CRR_IP="$2"
     repo="$3"
     token="$4"
     for repo in $CRR_REPO_LIST; do
-        echo ./runner_mgr.sh remove "$repo" "$VM_NAME"
+        echo ./runner_mgr.sh remove "$repo" "$SVR_NAME"
 
-        ssh $OPT_ssh "$CRR_remote_builder@$CRR_IP" "
+        ssh_builder "
             cd $CRR_AR_DIR &&
-            ./runner_mgr.sh remove '$repo' '$VM_NAME' $token
+            ./runner_mgr.sh remove '$repo' '$SVR_NAME' $token
             "
     done
 }
 
-HELP_destroy_vm="$TODO"
-destroy_vm (){
-    # destroy the VM
-    TRACE VBoxManage unregistervm "$VM_NAME"  --delete
+HELP_destroy_SVR="$TODO"
+destroy_SVR (){
+    # destroy the SVR
+    TRACE VBoxManage unregistervm "$SVR_NAME"  --delete
 }
 
 HELP_help="$TODO"
 help (){
-#awk '/^[a-z_]* \(\){/ { print "    "$1" - $HELP_"$1; }' bin/create_self_hosted_runner_on_vm.sh
+# awk '/^[a-z_]* \(\){/ { print "        (--"$1"|"$1") "$1" \"$@\";;"; }' bin/create_self_hosted_runner_on_vm.sh
+# awk '/^[a-z_]* \(\){/ { print "    "$1" - $HELP_"$1; }' bin/create_self_hosted_runner_on_vm.sh
     cat << EOF
 USAGE
     bin/create_self_hosted_runner_on_vm.sh <command> ...
@@ -3085,20 +3144,18 @@ CORE COMMANDS
     get_upstream_os_iso - $HELP_get_upstream_os_iso
     create_custom_iso - $HELP_create_custom_iso
     destroy_custom_iso - $HELP_destroy_custom_iso
-    create_custom_vm - $HELP_create_custom_vm
-    snapshot_vm - $HELP_snapshot_vm
-    clone_vm - $HELP_clone_vm
-    start_vm - $HELP_start_vm
+    create_custom_SVR - $HELP_create_custom_SVR
+    snapshot_SVR - $HELP_snapshot_SVR
+    clone_SVR - $HELP_clone_SVR
+    start_SVR - $HELP_start_SVR
     installation_phase_two - $HELP_installation_phase_two
-    shutdown_vm - $HELP_shutdown_vm
-    AR_prep_VM_inst - $HELP_configure_runner
-    destroy_vm - $HELP_destroy_vm
+    shutdown_SVR - $HELP_shutdown_SVR
+    AR_prep_SVR - $HELP_configure_runner
+    destroy_SVR - $HELP_destroy_SVR
     help - $HELP_help
 EOF
 }
 
-HELP_setenv_target_vm=""$TODO""
-setenv_target_vm (){
     # https://en.wikipedia.org/wiki/Usage_share_of_operating_systems
     # https://www.openlogic.com/blog/top-open-source-operating-systems-2022
     cat << EOF > /dev/null
@@ -3149,7 +3206,7 @@ setenv_target_vm (){
     often compared to macOS in terms of design.
 
     Slackware: One of the oldest distributions, known for its simplicity
-    and minimalism.
+    and minimalism.setenv_target_SVR
 
     11% Rocky Linux - based on RHEL
 
@@ -3204,69 +3261,84 @@ cases. Furthermore, the distinction between UNIX and Linux can sometimes
 blur, especially with Linux often being used in environments traditionally
 dominated by UNIX systems.
 EOF
-    case "$CRR_OS" in
-        (fedora-x86_64)
-            CRR_ver=39
-            CRR_ver=40
-            CRR_version="$CRR_ver-1.5"
-            CRR_machine="x86_64"
-            CRR_machine_l="x86_64 arch64 ppc64le s390x" # Server
+
+HELP_setenv_target_SVR=""$TODO""
+setenv_target_SVR (){
+    CRR_ver="$SVR_ver"
+    CRR_version="$SVR_Vv"
+    CRR_mach="$SVR_mach"
+
+    case "$SVR_OS-$CRR_mach" in
+        (fedora-*)
+            #CRR_ver=39
+            #CRR_ver=40
+            #CRR_version="$CRR_ver-1.5"
+            #CRR_mach="$CRR_mach"
+            CRR_mach_l="x86_64 arch64 ppc64le s390x" # Server
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
+
             CRR_inst_guide='https://fedoraproject.org/workstation/download'
-            # CRR_repo_iso="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_machine/iso/Fedora-Everything-netinst-$CRR_machine-$CRR_version.iso"
-            # CRR_repo_iso="https://gsl-syd.mm.fcix.net/fedora/linux/releases/$CRR_ver/Server/$CRR_machine/iso/Fedora-Server-dvd-$CRR_machine-$CRR_version.iso"
+            # CRR_repo_iso="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_mach/iso/Fedora-Everything-netinst-$CRR_mach-$CRR_version.iso"
+            # CRR_repo_iso="https://gsl-syd.mm.fcix.net/fedora/linux/releases/$CRR_ver/Server/$CRR_mach/iso/Fedora-Server-dvd-$CRR_mach-$CRR_version.iso"
             #             https://ap.edge.kernel.org/fedora/releases/test/40_Beta/Server/x86_64/iso/Fedora-Server-netinst-x86_64-40_Beta-1.10.iso
-            CRR_repo_iso="https://torrent.fedoraproject.org/torrents/Fedora-Server-dvd-x86_64-40.torrent"
-            #CRR_repo_iso="https://torrent.fedoraproject.org/torrents/Fedora-Server-dvd-x86_64-41_Beta.torrent"
+            CRR_repo_iso="https://torrent.fedoraproject.org/torrents/Fedora-Server-dvd-$CRR_mach-40.torrent"
+            #CRR_repo_iso="https://torrent.fedoraproject.org/torrents/Fedora-Server-dvd-$CRR_mach-41_Beta.torrent"
             CRR_iso_size='?'
-            CRR_repo_iso_checksum="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_machine/iso/Fedora-Everything-$CRR_version-$CRR_machine-CHECKSUM"
+            CRR_repo_iso_checksum="https://download.fedoraproject.org/pub/fedora/linux/releases/$CRR_ver/Everything/$CRR_mach/iso/Fedora-Everything-$CRR_version-$CRR_mach-CHECKSUM"
             checksum="sha256sum --ignore-missing -c"
             CRR_type='Fedora_64' # ToDo
-            CRR_rel='fedora-39' # RHEL-6.9 or CRR_OEMDRV ToDo
-            CRR_desc='Fedora Linux 9.3' # ToDo
+            CRR_rel='fedora-$CRR_ver' # RHEL-6.9 or CRR_OEMDRV ToDo
+            CRR_desc='Fedora Linux $CRR_ver' # ToDo
             CRR_family='Fedora Linux' # ToDo
         ;;
-        (rocky-x86_64)
-            CRR_ver=9
-            CRR_version="$CRR_ver.3"
-            CRR_machine=""x86_64 arch64 ppc64le s390x""
-            CRR_machine_l="$CRR_machine"
+        (rocky-*)
+            #CRR_ver=9
+            #CRR_version="$CRR_ver.3"
+            #CRR_mach="x86_64 arch64 ppc64le s390x"
+            CRR_mach_l="$CRR_mach"
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
+
             CRR_inst_guide="https://docs.rockylinux.org/guides/installation"
-            CRR_repo_iso="https://download.rockylinux.org/pub/rocky/$CRR_ver/isos/$CRR_machine/Rocky-$CRR_version-$CRR_machine-minimal.iso"
+            CRR_repo_iso="https://download.rockylinux.org/pub/rocky/$CRR_ver/isos/$CRR_mach/Rocky-$CRR_version-$CRR_mach-minimal.iso"
             CRR_iso_size='?'
-            CRR_repo_iso_checksum="https://download.rockylinux.org/pub/rocky/$CRR_version/isos/$CRR_machine/CHECKSUM"
+            CRR_repo_iso_checksum="https://download.rockylinux.org/pub/rocky/$CRR_version/isos/$CRR_mach/CHECKSUM"
             checksum="sha256sum --ignore-missing -c"
             CRR_type='RedHat_64'
-            CRR_rel="rockey-$CRR_version" # RHEL-6.9 or CRR_OEMDRV
+            CRR_rel="rocky-$CRR_version" # RHEL-6.9 or CRR_OEMDRV
             CRR_desc="Rocky Linux $CRR_version"
             CRR_family='Rocky Linux'
         ;;
-        (rhel-x86_64) # you may have to do this by hand due to registration
-            CRR_ver=9
-            CRR_version="$CRR_ver.3"
-            CRR_machine="x86_64"
-            CRR_machine_l="$CRR_machine"
+        (rhel-*) # you may have to do this by hand due to registration
+            #CRR_ver=9
+            #CRR_version="$CRR_ver.3"
+            #CRR_mach="x86_64"
+            CRR_mach_l="$CRR_mach" # ?QQQ
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
+
             CRR_inst_guide='https://access.redhat.com/downloads/content/rhel'
     # -boot
-            CRR_repo_iso="https://access.cdn.redhat.com/content/origin/files/sha256/6a/6a9f135b8836edd06aba1b94fd6d0e72bd97b4115a3d2a61496b33f73e0a13a5/rhel-$CRR_version-$CRR_machine-boot.iso?user=affdca1c90f2fdbe5b2fded5fb8f7a3b&_auth_=1701521114_9be76275d061244dfa7db927b32d9970"
+            CRR_repo_iso="https://access.cdn.redhat.com/content/origin/files/sha256/6a/6a9f135b8836edd06aba1b94fd6d0e72bd97b4115a3d2a61496b33f73e0a13a5/rhel-$CRR_version-$CRR_mach-boot.iso?user=affdca1c90f2fdbe5b2fded5fb8f7a3b&_auth_=1701521114_9be76275d061244dfa7db927b32d9970"
     # -dvd
-            CRR_repo_iso="https://access.cdn.redhat.com/content/origin/files/sha256/5c/5c802147aa58429b21e223ee60e347e850d6b0d8680930c4ffb27340ffb687a8/rhel-$CRR_version-$CRR_machine-dvd.iso?user=affdca1c90f2fdbe5b2fded5fb8f7a3b&_auth_=1701521114_15cbc4894a7280387e88c7ad98d7c78f"
+            CRR_repo_iso="https://access.cdn.redhat.com/content/origin/files/sha256/5c/5c802147aa58429b21e223ee60e347e850d6b0d8680930c4ffb27340ffb687a8/rhel-$CRR_version-$CRR_mach-dvd.iso?user=affdca1c90f2fdbe5b2fded5fb8f7a3b&_auth_=1701521114_15cbc4894a7280387e88c7ad98d7c78f"
             CRR_iso_size='?'
-            CRR_repo_iso_checksum="https://download.rockylinux.org/pub/rocky/$CRR_version/isos/$CRR_machine/CHECKSUM"
+            CRR_repo_iso_checksum="https://download.rockylinux.org/pub/rocky/$CRR_version/isos/$CRR_mach/CHECKSUM"
             checksum="sha256sum --ignore-missing -c"
             CRR_type='RedHat_64'
             CRR_rel="RHEL-$CRR_ver" # RHEL-6.9 or CRR_OEMDRV
             CRR_desc="Red Hat Enterprise Linux $CRR_version"
             CRR_family='Red Hat Enterprise Linux'
         ;;
-        (centos-x86_64) # you may hacve to do this by hand due to registration
-            CRR_ver=9
-            CRR_version="$CRR_ver.3"
-            CRR_machine="x86_64"
-            CRR_machine_l="x86_64 aarch64 ppc64 ppc64le armhfp i386"
+        (centos-*) # you may hacve to do this by hand due to registration
+            #CRR_ver=9
+            #CRR_version="$CRR_ver.3"
+            #CRR_mach="x86_64"
+            CRR_mach_l="x86_64 aarch64 ppc64 ppc64le armhfp i386"
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
+
             CRR_inst_guide='https://www.centos.org/download/'
     # -dvd1
-            CRR_repo_iso="https://mirrors.centos.org/mirrorlist?path=/$CRR_ver-stream/BaseOS/$CRR_machine/iso/CentOS-Stream-$CRR_ver-latest-$CRR_machine-dvd1.iso&redirect=1&protocol=https"
-            CRR_repo_iso="https://centos-stream.mirror.digitalpacific.com.au/$CRR_ver-stream/BaseOS/$CRR_machine/iso/CentOS-Stream-$CRR_ver-latest-$CRR_machine-dvd1.iso"
+            CRR_repo_iso="https://mirrors.centos.org/mirrorlist?path=/$CRR_ver-stream/BaseOS/$CRR_mach/iso/CentOS-Stream-$CRR_ver-latest-$CRR_mach-dvd1.iso&redirect=1&protocol=https"
+            CRR_repo_iso="https://centos-stream.mirror.digitalpacific.com.au/$CRR_ver-stream/BaseOS/$CRR_mach/iso/CentOS-Stream-$CRR_ver-latest-$CRR_mach-dvd1.iso"
             CRR_iso_size='?'
             CRR_repo_iso_checksum="?"
             checksum="sha256sum --ignore-missing -c"
@@ -3275,14 +3347,16 @@ EOF
             CRR_desc="Centos Stream Linux $CRR_version"
             CRR_family='Centos Stream Linux'
         ;;
-        (debian-amd64)
-            CRR_ver=12
-            CRR_version="$CRR_ver.1.0"
-            CRR_machine="amd64"
-            CRR_machine_l="$CRR_machine"
+        (debian-*)
+            #CRR_ver=12
+            #CRR_version="$CRR_ver.1.0"
+            #CRR_mach="amd64"
+            CRR_mach_l="$CRR_mach"
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
+
             CRR_inst_guide='https://www.debian.org/download' # debian-12.4.0-amd64-netinst.iso
-            CRR_repo_iso="https://gemmei.ftp.acc.umu.se/debian-cd/current/$CRR_machine/iso-cd/debian-$CRR_version-$CRR_machine-netinst.iso"
-            CRR_repo_iso="http://mirror.overthewire.com.au/debian-cd/current/$CRR_machine/iso-dvd/debian-$CRR_version-$CRR_machine-DVD-1.iso"
+            CRR_repo_iso="https://gemmei.ftp.acc.umu.se/debian-cd/current/$CRR_mach/iso-cd/debian-$CRR_version-$CRR_mach-netinst.iso"
+            CRR_repo_iso="http://mirror.overthewire.com.au/debian-cd/current/$CRR_mach/iso-dvd/debian-$CRR_version-$CRR_mach-DVD-1.iso"
             CRR_iso_size='?'
             CRR_repo_iso_checksum=''
             checksum="sha256sum --ignore-missing -c"
@@ -3291,19 +3365,37 @@ EOF
             CRR_desc="Debian Linux $CRR_version" # ToDo
             CRR_family='Debian Linux' # ToDo
         ;;
-        (ubuntu-amd64)
-            CRR_machine="amd64"
-            CRR_machine_l="$CRR_machine"
+        (raspbian-*)
+            #CRR_ver=12
+            #CRR_version="$CRR_ver.1.0"
+            #CRR_mach="amd64"
+            CRR_mach_l="$CRR_mach armhf armv6l armv7l aarch64"
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
 
-            CRR_ver=23
-            CRR_version="$CRR_ver.10"
+            CRR_inst_guide='https://www.raspberrypi.com/software/operating-systems'
+            CRR_repo_iso="https://downloads.raspberrypi.com/raspios_oldstable_armhf/images/raspios_oldstable_armhf-2024-03-12/2024-03-12-raspios-bullseye-armhf.img.xz.torrent"
+            CRR_iso_size='?'
+            CRR_repo_iso_checksum=''
+            checksum="sha256sum --ignore-missing -c"
+            CRR_type='raspbian_64' # ToDo
+            CRR_rel="raspbian-$CRR_version" # RHEL-6.9 or CRR_OEMDRV ToDo
+            CRR_desc="Raspbian Linux $CRR_version" # ToDo
+            CRR_family='Raspbian Linux' # ToDo
+        ;;
+        (ubuntu-*)
+            #CRR_mach="amd64"
+            CRR_mach_l="$CRR_mach"
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
+
+            #CRR_ver=23
+            #CRR_version="$CRR_ver.10"
             CRR_inst_guide='https://ubuntu.com/download/desktop'
-            CRR_repo_iso="https://cdimage.ubuntu.com/releases/mantic/release/ubuntu-$CRR_version-desktop-legacy-$CRR_machine.iso"
+            CRR_repo_iso="https://cdimage.ubuntu.com/releases/mantic/release/ubuntu-$CRR_version-desktop-legacy-$CRR_mach.iso"
 
-            CRR_ver=22
+            #CRR_ver=22
             CRR_version="$CRR_ver.04.3"
             CRR_inst_guide='https://ubuntu.com/download/server'
-            CRR_repo_iso="https://releases.ubuntu.com/$CRR_version/ubuntu-$CRR_version-live-server-$CRR_machine.iso"
+            CRR_repo_iso="https://releases.ubuntu.com/$CRR_version/ubuntu-$CRR_version-live-server-$CRR_mach.iso"
             CRR_iso_size='?'
             CRR_repo_iso_checksum=''
             checksum="sha256sum --ignore-missing -c"
@@ -3312,33 +3404,35 @@ EOF
             CRR_desc="Ubuntu Linux $CRR_version" # ToDo
             CRR_family='Ubuntu Linux' # ToDo
         ;;
-        (opensuse-x86_64)
-            CRR_machine="x86_64"
-            CRR_machine_l="x86_64      aarch64 ppc64le s390x"      # LEAP: x86_64 aarch64 ppc64le s390x
+        (opensuse-*)
+            #CRR_mach="x86_64"
+            #CRR_mach_l="x86_64      aarch64 ppc64le s390x"      # LEAP: x86_64 aarch64 ppc64le s390x
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
             # TumbleWeed: "x86_64 i686 aarch64 ppc64le s390x ppc64"
-            CRR_ver=15
-            CRR_version="$CRR_ver.5"
+            #CRR_ver=15
+            #CRR_version="$CRR_ver.5"
             CRR_inst_guide='https://get.opensuse.org/server'
-            CRR_repo_is0="https://mirror.aarnet.edu.au/pub/opensuse/opensuse/distribution/leap/$CRR_version/iso/openSUSE-Leap-$CRR_version-NET-$CRR_machine-Build491.1-Media.iso"
-            CRR_repo_iso="https://mirror.aarnet.edu.au/pub/opensuse/opensuse/distribution/leap/$CRR_version/iso/openSUSE-Leap-$CRR_version-DVD-$CRR_machine-Build491.1-Media.iso"
+            CRR_repo_is0="https://mirror.aarnet.edu.au/pub/opensuse/opensuse/distribution/leap/$CRR_version/iso/openSUSE-Leap-$CRR_version-NET-$CRR_mach-Build491.1-Media.iso"
+            CRR_repo_iso="https://mirror.aarnet.edu.au/pub/opensuse/opensuse/distribution/leap/$CRR_version/iso/openSUSE-Leap-$CRR_version-DVD-$CRR_mach-Build491.1-Media.iso"
             CRR_iso_size='?'
-            CRR_repo_is0_checksum="https://download.opensuse.org/distribution/leap/$CRR_version/iso/openSUSE-Leap-$CRR_version-NET-$CRR_machine-Media.iso.sha256"
-            CRR_repo_iso_checksum="https://download.opensuse.org/distribution/leap/$CRR_version/iso/openSUSE-Leap-$CRR_version-DVD-$CRR_machine-Media.iso.sha256"
+            CRR_repo_is0_checksum="https://download.opensuse.org/distribution/leap/$CRR_version/iso/openSUSE-Leap-$CRR_version-NET-$CRR_mach-Media.iso.sha256"
+            CRR_repo_iso_checksum="https://download.opensuse.org/distribution/leap/$CRR_version/iso/openSUSE-Leap-$CRR_version-DVD-$CRR_mach-Media.iso.sha256"
             checksum="sha256sum --ignore-missing -c"
             CRR_type='Suse_64' # ToDo
             CRR_rel="suse-$CRR_version" # RHEL-6.9 or CRR_OEMDRV ToDo
             CRR_desc="Suse Linux $CRR_version" # ToDo
             CRR_family='Suse Linux' # ToDo
         ;;
-        (freebsd-amd64)
-            CRR_machine="amd64"
-            CRR_machine_l="amd64 i386 powerpc powerpc64 powerpc64le powerpcspe armv7 aarch64 riscv64"
-            CRR_ver=14;
-            CRR_version="$CRR_ver.0";
+        (freebsd-*)
+            #CRR_mach="amd64"
+            CRR_mach_l="amd64 i386 powerpc powerpc64 powerpc64le powerpcspe armv7 aarch64 riscv64"
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
+            #CRR_ver=14;
+            #CRR_version="$CRR_ver.0";
             CRR_inst_guide='https://www.freebsd.org/where';
-            CRR_repo_iso="https://download.freebsd.org/releases/$CRR_machine/$CRR_machine64/ISO-IMAGES/$CRR_version/FreeBSD-$CRR_version-RELEASE-$CRR_machine-dvd1.iso";
+            CRR_repo_iso="https://download.freebsd.org/releases/$CRR_mach/$CRR_mach/ISO-IMAGES/$CRR_version/FreeBSD-$CRR_version-RELEASE-$CRR_mach-dvd1.iso";
             CRR_iso_size='?';
-            CRR_repo_iso_checksum="https://download.freebsd.org/releases/$CRR_machine/$CRR_machine64/ISO-IMAGES/$CRR_version/CHECKSUM.SHA256-FreeBSD-$CRR_version-RELEASE-$CRR_machine";
+            CRR_repo_iso_checksum="https://download.freebsd.org/releases/$CRR_mach/$CRR_mach/ISO-IMAGES/$CRR_version/CHECKSUM.SHA256-FreeBSD-$CRR_version-RELEASE-$CRR_mach";
             checksum="sha256sum --ignore-missing -c";
             CRR_type='NetBSD_64' # ToDo
             CRR_rel="NetBSD-$CRR_version";
@@ -3346,13 +3440,13 @@ EOF
             CRR_family='NetBSD Unix' # ToDo
         ;;
         (*)
-            RAISE "unknown OS ISO Image:" "$CRR_OS"
+            RAISE "unknown OS ISO Image:" "$SVR_OS"
         ;;
     esac
     CRR_local_iso="$local_downloads/`echo $CRR_repo_iso | sed 's/?.*//; s?^.*/??'`"
     CRR_local_iso_checksum="$local_downloads/`basename $CRR_local_iso .iso`.CHECKSUM"
     CRR_local_custom_iso="$local_downloads/`basename $CRR_local_iso .iso`-custom.iso"
-    CRR_hostname="$(echo $CRR_local_iso | normalise_hostname)-$CRR_VM"
+    CRR_hostname="$(echo $CRR_local_iso | normalise_hostname)-$SVR_ty"
 
     CRR_LABELS="$CRR_hostname"
 
@@ -3364,26 +3458,11 @@ EOF
         TMP_WORKDIR=`echo $CRR_local_template`
     fi
 
-    VM_NAME="$CRR_hostname"
+    SVR_NAME="$CRR_hostname"
 }
 
-# Defects:
-# Install?
-# Root access?
-
-ARG_L="
-O/rocky-x86_64      +ssh_root -enter-to-install .cdrom-eject .runner
-O/rhel-x86_64       +ssh_root -enter-to-install .cdrom-eject .runner
-O/centos-x86_64     +ssh_root -enter-to-install .cdrom-eject .runner
-d/fedora-x86_64     +ssh_root +enter-to-install -cdrom-eject .runner
-s/ubuntu-amd64      +ssh_root -enter-to-install .cdrom-eject .runner
-O/debian-amd64      +ssh_root -enter-to-install +cdrom-eject .runner
-O/opensuse-x86_64   +ssh_root                   -cdrom-eject .runner
-O/freebsd-amd64     -ssh_root -enter-to-install .cdrom-eject .runner
-"
-
 depr_get_vm_ip (){
-    # Extract MAC address of the VM
+    # Extract MAC address of the SVR
     re_mac="$(VBoxManage showvminfo "$1" --machinereadable |
         sed '/^macaddress[0-9]*=/!d;
             s/"$//; s/.*"//;
@@ -3395,137 +3474,278 @@ depr_get_vm_ip (){
     ip neigh | grep -E "$re_mac" | awk '{ print $1 }'
 }
 
-# awk '/^[a-z_]* \(\){/ { print "        (--"$1"|"$1") "$1" \"$@\";;"; }' bin/create_self_hosted_runner_on_vm.sh
+is_VBox_started(){
+    local vm="$1"
+    local nic="$2"
+    get_ip_of_VBox_nic "$vm" "$nic" &&
+        is_open_host_port "$SVR_addr" "$CRR_SSH_PORT" # &&
+            # ssh $OPT_ssh "root@$SVR_addr" hostname
+}
 
-if [ "$#" == "0" ]; then
-    set -- $ARG_L
-fi
-
-CRR_OS_L=""
-
-for ARG in "$@"; do
-    case "$ARG" in
-        (--help)help;;
-        (-*|+*|/*|.*)false;; # -/bad; +/good, ./unknown
-        ([Tt]*/*)true;; # ToDo
-        ([Oo]*/*)true;; # OK/Done
-        ([Ss]*/*)true;; # Skip
-        ([Dd]*/*|/*|*) # Do .. build now
-            CRR_OS=`basename -- $ARG`
-            CRR_OS_L="$CRR_OS_L $CRR_OS"
+is_SVR_started(){
+    local svr="$1"
+    case "$svr" in
+        (*-vbox)is_VBox_started "$svr" "$CRR_VBOX_NIC_NUM";;
+        (*-bare)
+            svr="$SVR_addr"
+            is_open_host_port "$svr" "$CRR_SSH_PORT"
         ;;
-        (*) echo "Huh? CRR_OS=$CRR_OS";;
+        (*) RAISE unknown server $SVR;;
     esac
-done
-
-CRR_NIC_NUM=2
-CRR_SSH_PORT=22
-
-is_vm_started(){
-    local vm="$1"
-    local nic="$2"
-    get_ip_of_vm_nic "$vm" "$nic" &&
-        is_open_host_port "$ip_address" "$CRR_SSH_PORT" # &&
-            # ssh $OPT_ssh "root@$ip_address" hostname
 }
 
-
-is_vm_ssh_started(){
+is_VBox_ssh_started(){
     local vm="$1"
     local nic="$2"
-    get_ip_of_vm_nic "$vm" "$nic" &&
-        ip_up_host "$ip_address" &&
-          is_open_host_port "$ip_address" "$CRR_SSH_PORT" # &&
-              ssh $OPT_ssh "root@$ip_address" hostname
+    get_ip_of_VBox_nic "$vm" "$nic" &&
+        ip_up_host "$SVR_addr" &&
+          is_open_host_port "$SVR_addr" "$CRR_SSH_PORT" # &&
+              ssh $OPT_ssh "root@$SVR_addr" hostname
 }
 
-is_vm_pingable(){
+is_VBox_pingable(){
     local vm="$1"
     local nic="$2"
-    get_ip_of_vm_nic "$vm" "$nic" &&
-        ip_up_host "$ip_address"
-        #is_open_host_port "$ip_address" "$CRR_SSH_PORT" # &&
-        #    ssh $OPT_ssh "root@$ip_address" hostname
+    get_ip_of_VBox_nic "$vm" "$nic" &&
+        ip_up_host "$SVR_addr"
+        #is_open_host_port "$SVR_addr" "$CRR_SSH_PORT" # &&
+        #    ssh $OPT_ssh "root@$SVR_addr" hostname
 }
 
-is_vm_stopped(){
+is_VBox_stopped(){
     local vm="$1"
     local nic="$2"
-    NOT is_vm_started "$vm" "$nic"
+    NOT is_VBox_started "$vm" "$nic"
 }
 
-build_all_custom_isos_and_vms(){
-    for CRR_OS in $CRR_OS_L; do
-        setenv_target_vm
+is_SVR_stopped(){
+    local svr="$1"
+    NOT is_SVR_started "$svr";
+}
+
+build_custom_ISOs_and_SVRs(){
+    while read $SVR_attr_name_l; do
+        setenv_target_SVR
         get_upstream_os_iso
         create_custom_iso # now with create_install_script;
-        create_custom_vm
-    done
+        create_custom_SVR
+    done <<< "$SVR_attr_value_l_l"
 }
 
-snapshot_all_vms(){
-    for CRR_OS in $CRR_OS_L; do
-        setenv_target_vm
-        if is_vm_started "$CRR_hostname" "$CRR_NIC_NUM"; then
-            shutdown_vm;
+snapshot_VBoxs(){
+    while read $SVR_attr_name_l; do
+        setenv_target_SVR
+        if is_VBox_started "$CRR_hostname" "$CRR_VBOX_NIC_NUM"; then
+            shutdown_SVR;
         fi
-        # WAIT_UNTIL is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM" &&
-        WAIT_WHILE is_vm_pingable "$CRR_hostname" "$CRR_NIC_NUM" || {
+        # WAIT_UNTIL is_VBox_stopped "$CRR_hostname" "$CRR_VBOX_NIC_NUM" &&
+        WAIT_WHILE is_VBox_pingable "$CRR_hostname" "$CRR_VBOX_NIC_NUM" || {
             sleep 6
-            ASSERT VBoxManage storageattach "$VM_NAME" --storagectl 'IDE Controller' --port 0 --device 0 --type dvddrive --medium none
+            ASSERT VBoxManage storageattach "$SVR_NAME" --storagectl 'IDE Controller' --port 0 --device 0 --type dvddrive --medium none
             sleep 6
-            snapshot_vm vanilla && sleep 12
+            snapshot_SVR vanilla && sleep 12
         }
-    done
+    done <<< "$SVR_attr_value_l_l"
 }
 
-run_on_each_vm(){
-    for CRR_OS in $CRR_OS_L; do
-        setenv_target_vm
+for_SVRs_srun(){
+    while read SVR_attr_value_l; do
+        read $SVR_attr_name_l <<< "$SVR_attr_value_l"
+        setenv_target_SVR
 
-        if is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM"; then start_vm && sleep 24; fi
+        #if is_VBox_stopped "$CRR_hostname" "$CRR_VBOX_NIC_NUM"; then start_SVR && sleep 24; fi
+        if is_SVR_stopped "$CRR_hostname"; then start_SVR && sleep 24; fi
 
-        #ip_address=`get_ip_of_vm_nic $CRR_hostname $CRR_NIC_NUM`
+        #SVR_addr=`get_ip_of_VBox_nic $CRR_hostname $CRR_VBOX_NIC_NUM`
 
-        WAIT_UNTIL is_vm_started "$CRR_hostname" "$CRR_NIC_NUM" && {
-            echo_Q started: "$CRR_hostname" "$CRR_NIC_NUM" cmd_l="$@"
+        #WAIT_UNTIL is_VBox_started "$CRR_hostname" "$CRR_VBOX_NIC_NUM" && {
+        WAIT_UNTIL is_SVR_started "$CRR_hostname" && {
+            echo_Q started: "$CRR_hostname" "$CRR_VBOX_NIC_NUM" cmd_l="$@"
             for cmd in "$@"; do
-                [ "$cmd" = "shutdown_vm" ] && break
-                # ssh $OPT_ssh root@$ip_address
-                # AR_prep_VM_inst "$CRR_hostname" "$ip_address"
-                echo ASSERT "$cmd" "$CRR_hostname" "$ip_address" $AR_TOKEN
-                ASSERT "$cmd" "$CRR_hostname" "$ip_address" $AR_TOKEN
+                [ "$cmd" = "shutdown_SVR" ] && break
+                # ssh $OPT_ssh root@$SVR_addr
+                # ASSERT "$cmd" "$CRR_hostname" "$SVR_addr" $AR_TOKEN
+                # echo ASSERT "$cmd" "$CRR_hostname" "$SVR_addr" $AR_TOKEN
+                ASSERT "$cmd" "$CRR_hostname" "$SVR_addr" $AR_TOKEN
             done
         }
-        [ "$cmd" = "shutdown_vm" ] &&
-            shutdown_vm &&
-                WAIT_UNTIL is_vm_stopped "$CRR_hostname" "$CRR_NIC_NUM" && echo stopped: "$CRR_hostname" "$CRR_NIC_NUM"
-        # destroy_vm
-    done
+        if [ "$cmd" = "shutdown_SVR" ]; then
+            case "$SVR_ty" in
+                (bare) true;;
+                (*) shutdown_SVR &&
+                        WAIT_UNTIL is_SVR_stopped "$CRR_hostname" && 
+                            echo stopped: "$CRR_hostname" "$CRR_VBOX_NIC_NUM"
+                ;;
+            esac
+        fi
+        # destroy_SVR
+    done  <<< "$SVR_attr_value_l_l"
+    true
 }
 
-#build_all_custom_isos_and_vms
-#run_on_each_vm true shutdown_vm # installation phase 1
+# Defects:
+# Install?
+# Root access?
 
-#snapshot_all_vms # each VM is stopped, & DVD ejected for snapshot
+# Key : (+=done) (-=problem) (.=todo)
+# SR  : adm_root available
+# NEI : enter-to-install - not required
+# NCD : cdrom-eject - not required
+# AR  : actions-runner installs correctly
+# UC  : Under construction
+
+SVR_ty_l="vbox bare github .qemu .kvm .vmware .docker .xen .aws"
+
+SVR_attr_name_l="\
+SVR_St SVR_OS SVR_ver SVR_Vv SVR_mach  SVR_addr SVR_ty  SVR_via colon SVR_Etc"
+SVR_attr_value_l_l="\"
+Do     fedora      40 40      x86_64  -                          vbox adm_root  : +SR +NEI -NCD .AR
+Do     rhel         9  9.4    x86_64  localhost                  bare adm_root  : +SR -NEI .NCD .AR
+Do     rocky        9  9.4    aarch64 pi4b14-rocky9-4-aarch64-8g bare adm_rocky : etc. [r] pi4b14-rocky9-4-aarch64-8g/172.31.0.27
+Do     debian      11 11      aarch64 pi4b14-deb11-aarch64-2g    bare adm_owner : etc. [no]
+"
+
+all_SVR_attr_value_l_l="$SVR_attr_value_l_l"
+
+parked_SVR_attr_value_l_l="\
+Do     raspbian    12 12      armv7l  pi2b11-deb12-armv7l-1g     bare adm_owner : etc. [o] 172.31.1.36
+
+Doing  raspbian    11 11      armv6l  192.168.0.73    bare adm_owner : etc. [o] pi1b2-deb11-armv6l-512m
+Doing  raspbian    10 10      armv6l  192.168.0.72    bare adm_pi : etc. [p] pi1b1-raspbian10-armv6l-256m
+
+Spare  rocky        9  9.4    aarch64 192.168.0.48                    bare adm_rocky : etc. [nor] pi4b14-rocky9-4-aarch64-4g/192.168.0.48
+
+Ok     rocky        9  9.3    x86_64         -  vbox  adm_root : +SR -NEI .NCD .AR
+Ok     centos       9  9.3    x86_64         -  vbox  adm_root : +SR -NEI .NCD .AR
+Skip   ubuntu      23 23      amd64          -  vbox  adm_root : +SR -NEI .NCD .AR
+Ok     debian      12 12.1.0  amd64          -  vbox  adm_root : +SR -NEI +NCD .AR
+Ok     opensuse    15 15.5    x86_64         -  vbox  adm_root : +SR      -NCD .AR
+Ok     freebsd     14 14.0    amd64          -  vbox  adm_root : -SR -NEI .NCD .AR
+"
+
+#all_SVR_attr_value_l_l+="$NL$parked_SVR_attr_value_l_l"
+
+# select only "Do" records...
+SVR_attr_value_l_l="$(
+    while read SVR_ATTR_L; do
+        case "$SVR_ATTR_L" in
+            (Do*|Doing|Done)echo "$SVR_ATTR_L";;
+        esac
+    done <<< "$SVR_attr_value_l_l"
+)"
+
+# https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners
+
+# ToDo...
+todo_SVR_attr_value_l_l="\
+ToDo   ubuntu      20 20.04   amd64          -  github adm_root :
+ToDo   ubuntu      22 22.04   amd64          -  github adm_root :
+ToDo   macos       11 11      amd64          -  github adm_root :
+ToDo   macos       12 12      amd64          -  github adm_root :
+ToDo   windows   2019 2019    amd64          -  github adm_root :
+ToDo   windows   2022 2022    amd64          -  github adm_root :
+"
+
+#all_SVR_attr_value_l_l+="$NL$todo_SVR_attr_value_l_l"
+
+# unknown/todo/check...
+unknown_SVR_attr_value_l_l="\
+"
+
+# avoiding...
+avoiding_SVR_attr_value_l_l="\
+"
+
+# retired...
+depr_SVR_attr_value_l_l="\
+Do     fedora      39 39      x86_64         -  vbox  adm_root : +SR +NEI -NCD .AR
+Do     fedora      38 38      x86_64         -  vbox  adm_root : +SR +NEI -NCD .AR
+"
+
+#all_SVR_attr_value_l_l+="$depr_SVR_attr_value_l_l"
+
+
+get_self_hosted(){
+    hosts="$(awk '/!SELF-HOSTED!/{
+        if($0 !~ "^  *#"){
+            sub("^[-# ]*",""); sub("[# ].*$","");
+            SH=SH"/"$1
+        }
+    }
+    END{
+        print SH"/"
+    }' .github/workflows/autopkg_action.yml)"
+    
+    while read SVR_ATTR_L; do
+        read $SVR_attr_name_l <<< $SVR_ATTR_L
+        this_host="$SVR_OS$SVR_Vv-$SVR_mach"
+        if [[ "$hosts" =~ "/$this_host/" ]]; then
+            echo $SVR_ATTR_L
+        fi
+    done <<< "$all_SVR_attr_value_l_l"
+
+}
+
 CRR_REPO_LIST=""
 CRR_REPO_LIST+="NevilleDNZ-downstream/repo_autopkg-downstream "
 CRR_REPO_LIST+="NevilleDNZ/repo_autopkg "
 
-run_on_each_vm AR_prep_VM_inst # AR_configure AR_run AR_status
-run_on_each_vm                 AR_configure AR_run AR_status
-#run_on_each_vm                  AR_run AR_status
+if [ "$#" == "0" ]; then
+    argv=""
+    #argv+=" build_SVRs"
+    argv+=" self_hosted"
+    argv+=" add_SVRs"
+    argv+=" add_runners"
+    argv+=" start_runners"
 
-#run_on_each_vm AR_prep_VM_inst
-#run_on_each_vm AR_run
-#run_on_each_vm AR_kill
-#run_on_each_vm shutdown_vm # use shutdown_vm when you cannot run all vm's at once.
+    #argv="status_runners"
 
-#run_on_each_vm AR_prep_VM_inst
-#run_on_each_vm AR_configure
-#run_on_each_vm AR_run
-#run_on_each_vm AR_kill
-#run_on_each_vm AR_remove
-#run_on_each_vm shutdown_vm # assumes vms need to be started first
+    #argv="remove_runners"
+    set -- $argv
+fi
 
+echo_Q JOB: "$0" "$@"
+
+for action in "$@"; do
+    case "$action" in
+        (help|--help)
+            echo USAGE:
+            echo "  $0 build_SVRs"
+            echo "  $0 add_SVRs"
+            echo "  $0 add_runners"
+            echo "  $0 start_runners"
+            echo "  $0 add_runners start_runners"
+            echo "  $0 status_runners"
+            echo "  $0 remove_runners"
+        ;;
+        (self_hosted)
+            # echo "$all_SVR_attr_value_l_l:$NL$all_SVR_attr_value_l_l"
+# eg. rhel9.4-x86_64 rocky9.4-aarch64 debian11-aarch64 raspbian12-armv7l fedora38-x86_64 fedora39-x86_64 fedora40-x86_64
+            SVR_attr_value_l_l="`get_self_hosted`"
+            echo SVR_attr_value_l_l:"$NL$SVR_attr_value_l_l"
+        ;;
+        (build_SVRs)
+            build_custom_ISOs_and_SVRs
+            for_SVRs_srun true shutdown_SVR # installation phase 1
+            snapshot_VBoxs # each SVR is stopped, & DVD ejected for snapshot
+        ;;
+        (add_SVRs)
+            for_SVRs_srun AR_prep_SVR
+        ;;
+        (add_runners)
+            for_SVRs_srun AR_configure_runners_repo_at_SVR
+        ;;
+        (start_runners)
+            for_SVRs_srun AR_run_runners_repo_at_SVR
+        ;;
+        (status_runners)
+            for_SVRs_srun AR_status_runners_repo_at_SVR
+        ;;
+        (remove_runners)
+            for_SVRs_srun AR_kill_runners_repo_at_SVR AR_remove_runners_repo_at_SVR
+            for_SVRs_srun shutdown_SVR # use shutdown_SVR when you cannot run all SVRs at once.
+        ;;
+        (*)echo Huh? "$0 $@";;
+    esac
+done
 exit $?
