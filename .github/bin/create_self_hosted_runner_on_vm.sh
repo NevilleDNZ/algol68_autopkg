@@ -31,6 +31,7 @@ TRUE="TrU"
 FALSE=""
 q="'"
 qq='"'
+NL=$'\n'
 
 WS0="[[:space:]]*"
 WS="[[:space:]]\+"
@@ -158,7 +159,7 @@ normalise_hostname(){
         s?^.*/??;
         s/?.*$//;
         s/[.]iso//;
-        s/-\(\(dvd\|DVD\)\(-*[0-9][0-9]*\)*\|disc[0-9]\|live\|boot\|minimal\|legacy\|desktop\|netinst\|live\|server\|NET\|Build[^-]*\|Media\|RELEASE\|torrent\)//g;
+        s/-\(\(dvd\|DVD\)\(-*[0-9][0-9]*\)*\|disc[0-9]\|live\|boot\|minimal\|legacy\|desktop\|netinst\|live\|server\|NET\|Build[^-]*\|Media\|RELEASE\|torrent\|img\|xz\)//g;
         s/[.]torrent//g;
         s/\([a-zA-Z]\)/\L\1/g;
         s/\([a-z]\)-\([0-9]\)/\1\2/g;
@@ -232,6 +233,9 @@ local_tmpdir="$local_downloads/tmp"
 CRR_UID=`id -u`
 CRR_local_depatcher=`id -un` # user name
 CRR_GID=`id -g` # not sure UID/GID is avaliable on all OSes
+
+((CRR_UID+=1))
+((CRR_GID+=1))
 
 CRR_remote_admin=`id -un`adm # user name
 CRR_remote_builder=`id -un`bld # user name
@@ -2885,19 +2889,24 @@ snapshot_SVR (){
     # The snapshot name to check for; $1, else vanilla
     SNAPSHOT_NAME="${1:-vanilla}"
 
-    # Check if the snapshot exists
-    if VBoxManage snapshot "$SVR_NAME" list | grep -q "$SNAPSHOT_NAME"; then
-        echo "Snapshot '$SNAPSHOT_NAME' already exists for SVR '$SVR_NAME'."
-    else
-        echo "Snapshot '$SNAPSHOT_NAME' does not exist. Creating snapshot..."
-        TRACE VBoxManage snapshot "$SVR_NAME" take "$SNAPSHOT_NAME" --pause
-        echo "Snapshot '$SNAPSHOT_NAME' created successfully."
-    fi
-
+    case "$SVR_ty" in
+        (vbox)
+            # Check if the snapshot exists
+            if VBoxManage snapshot "$SVR_NAME" list | grep -q "$SNAPSHOT_NAME"; then
+                echo "Snapshot '$SNAPSHOT_NAME' already exists for SVR '$SVR_NAME'."
+            else
+                echo "Snapshot '$SNAPSHOT_NAME' does not exist. Creating snapshot..."
+                TRACE VBoxManage snapshot "$SVR_NAME" take "$SNAPSHOT_NAME" --pause
+                echo "Snapshot '$SNAPSHOT_NAME' created successfully."
+            fi
+        ;;
+        (bare)true;; # need a operator to backup??
+        (*)RAISE snapshot: unknown SVR_ty: $SVR_ty;;
+    esac
 }
 
 HELP_clone_SVR="$TODO"
-clone_SVR (){
+depr_clone_SVR (){
     # clone the SVR
     TRACE VBoxManage clonevm "$SVR_NAME" # ToDo
 }
@@ -2905,7 +2914,11 @@ clone_SVR (){
 HELP_start_SVR="$TODO"
 start_SVR (){
     # start the SVR
-    TRACE VBoxManage startvm "$SVR_NAME"
+    case "$SVR_ty" in
+        (vbox)TRACE VBoxManage startvm "$SVR_NAME";;
+        (bare)true;; # need a webhook to re-poweron??
+        (*)RAISE start: unknown SVR_ty: $SVR_ty;;
+    esac
 }
 
 HELP_installation_phase_two="shutdown_SVR, remove_DVD, start_SVR - so as not to reinstall OS"
@@ -2920,7 +2933,11 @@ installation_phase_two (){
 HELP_shutdown_SVR="$TODO"
 shutdown_SVR (){
     # stop the SVR
-    TRACE VBoxManage controlvm "$SVR_NAME" acpipowerbutton
+    case "$SVR_ty" in
+        (vbox)TRACE VBoxManage controlvm "$SVR_NAME" acpipowerbutton;;
+        (bare)NOTE Manually check "$SVR_NAME" is powered up;;
+        (*)RAISE shutdown: unknown SVR_ty: $SVR_ty;;
+    esac
 }
 
 CRR_IR_LOG="AR_prep_SVR.log"
@@ -2957,7 +2974,7 @@ adm_rocky(){
     adm_via rocky "$@"
 }
 
-HELP_AR_prep_SVR="$TODO"
+HELP_AR_prep_SVR="setup $CRR_remote_builder; scp ./runner_mgr.sh; install self hosting SW"
 AR_prep_SVR (){
     SVR_NAME="$1"
     CRR_IP="$2"
@@ -3346,6 +3363,23 @@ setenv_target_SVR (){
             CRR_desc="Debian Linux $CRR_version" # ToDo
             CRR_family='Debian Linux' # ToDo
         ;;
+        (raspbian-*)
+            #CRR_ver=12
+            #CRR_version="$CRR_ver.1.0"
+            #CRR_mach="amd64"
+            CRR_mach_l="$CRR_mach armhf armv6l armv7l aarch64"
+            [[ " $CRR_mach_l " == *" $CRR_mach "* ]] || RAISE "$SVR_OS-$CRR_mach" not in $CRR_mach_l
+
+            CRR_inst_guide='https://www.raspberrypi.com/software/operating-systems'
+            CRR_repo_iso="https://downloads.raspberrypi.com/raspios_oldstable_armhf/images/raspios_oldstable_armhf-2024-03-12/2024-03-12-raspios-bullseye-armhf.img.xz.torrent"
+            CRR_iso_size='?'
+            CRR_repo_iso_checksum=''
+            checksum="sha256sum --ignore-missing -c"
+            CRR_type='raspbian_64' # ToDo
+            CRR_rel="raspbian-$CRR_version" # RHEL-6.9 or CRR_OEMDRV ToDo
+            CRR_desc="Raspbian Linux $CRR_version" # ToDo
+            CRR_family='Raspbian Linux' # ToDo
+        ;;
         (ubuntu-*)
             #CRR_mach="amd64"
             CRR_mach_l="$CRR_mach"
@@ -3512,7 +3546,7 @@ snapshot_VBoxs(){
     done <<< "$SVR_attr_value_l_l"
 }
 
-for_SVRs_run(){
+for_SVRs_srun(){
     while read SVR_attr_value_l; do
         read $SVR_attr_name_l <<< "$SVR_attr_value_l"
         setenv_target_SVR
@@ -3529,14 +3563,19 @@ for_SVRs_run(){
                 [ "$cmd" = "shutdown_SVR" ] && break
                 # ssh $OPT_ssh root@$SVR_addr
                 # ASSERT "$cmd" "$CRR_hostname" "$SVR_addr" $AR_TOKEN
-                echo ASSERT "$cmd" "$CRR_hostname" "$SVR_addr" $AR_TOKEN
+                # echo ASSERT "$cmd" "$CRR_hostname" "$SVR_addr" $AR_TOKEN
                 ASSERT "$cmd" "$CRR_hostname" "$SVR_addr" $AR_TOKEN
             done
         }
-        [ "$cmd" = "shutdown_SVR" ] &&
-            shutdown_SVR &&
-                #WAIT_UNTIL is_VBox_stopped "$CRR_hostname" "$CRR_VBOX_NIC_NUM" && echo stopped: "$CRR_hostname" "$CRR_VBOX_NIC_NUM"
-                WAIT_UNTIL is_SVR_stopped "$CRR_hostname" && echo stopped: "$CRR_hostname" "$CRR_VBOX_NIC_NUM"
+        if [ "$cmd" = "shutdown_SVR" ]; then
+            case "$SVR_ty" in
+                (bare) true;;
+                (*) shutdown_SVR &&
+                        WAIT_UNTIL is_SVR_stopped "$CRR_hostname" && 
+                            echo stopped: "$CRR_hostname" "$CRR_VBOX_NIC_NUM"
+                ;;
+            esac
+        fi
         # destroy_SVR
     done  <<< "$SVR_attr_value_l_l"
     true
@@ -3557,16 +3596,23 @@ SVR_ty_l="vbox bare github .qemu .kvm .vmware .docker .xen .aws"
 
 SVR_attr_name_l="\
 SVR_St SVR_OS SVR_ver SVR_Vv SVR_mach  SVR_addr SVR_ty  SVR_via colon SVR_Etc"
-SVR_attr_value_l_l="\
-Do      fedora      40 40      x86_64         -  vbox  adm_root : +SR +NEI -NCD .AR
+SVR_attr_value_l_l="\"
+Do     raspbian    12 12      armv7l  pi2b11-deb12-armv7l-1g          bare adm_owner : etc. [o] 172.31.1.36
+Do     fedora      40 40      x86_64         -  vbox  adm_root : +SR +NEI -NCD .AR
+Do     rhel         9  9.4    x86_64 localhost  bare  adm_root : +SR -NEI .NCD .AR
+Do     rocky        9  9.4    aarch64 pi4b14-rocky9-4-aarch64-8g bare adm_rocky : etc. [r] pi4b14-rocky9-4-aarch64-8g/172.31.0.27
+Do     debian      11 11      aarch64 pi4b14-deb11-aarch64-2g         bare adm_owner : etc. [no]
 "
 
+all_SVR_attr_value_l_l="$SVR_attr_value_l_l"
+
 parked_SVR_attr_value_l_l="\
-Ok      rocky        9 9.4     aarch64 172.31.0.27 bare adm_rocky : etc. [r] pi4b14-rocky9-4-aarch64-8g/172.31.0.27
-Doing   raspbian    11 11      armv7l  pi2b11-deb12-armv7l-1g          bare adm_owner : etc. [o]
+Doing  raspbian    11 11      armv6l  192.168.0.73         bare adm_owner : etc. [o] pi1b2-deb11-armv6l-512m
+Doing  raspbian    10 10      armv6l  192.168.0.72    bare adm_pi : etc. [p] pi1b1-raspbian10-armv6l-256m
+
+Spare  rocky        9  9.4    aarch64 192.168.0.48                    bare adm_rocky : etc. [nor] pi4b14-rocky9-4-aarch64-4g/192.168.0.48
 
 Ok     rocky        9  9.3    x86_64         -  vbox  adm_root : +SR -NEI .NCD .AR
-Ok     rhel         9  9.3    x86_64 localhost  vbox  adm_root : +SR -NEI .NCD .AR
 Ok     centos       9  9.3    x86_64         -  vbox  adm_root : +SR -NEI .NCD .AR
 Skip   ubuntu      23 23      amd64          -  vbox  adm_root : +SR -NEI .NCD .AR
 Ok     debian      12 12.1.0  amd64          -  vbox  adm_root : +SR -NEI +NCD .AR
@@ -3574,6 +3620,7 @@ Ok     opensuse    15 15.5    x86_64         -  vbox  adm_root : +SR      -NCD .
 Ok     freebsd     14 14.0    amd64          -  vbox  adm_root : -SR -NEI .NCD .AR
 "
 
+#all_SVR_attr_value_l_l+="$NL$parked_SVR_attr_value_l_l"
 
 # select only "Do" records...
 SVR_attr_value_l_l="$(
@@ -3588,11 +3635,6 @@ SVR_attr_value_l_l="$(
 
 # ToDo...
 todo_SVR_attr_value_l_l="\
-ToDo   raspbian    10 10      armv6l  pi1b1-raspbian10-armv6l-256m    bare adm_pi : etc. [p]
-ToDo   raspbian    10 10      armv6l  pi1b2-deb11-armv6l-512m         bare adm_owner : etc. [o]
-Doing  raspbian    12 12      aarch64 pi4b14-deb11-aarch64-2g         bare adm_owner : etc. [no]
-ToDo   rocky        9 9.4     aarch64 pi4b14-rocky9-4-aarch64-4g      bare adm_rocky : etc. [nor] 192.168.0.48
-
 ToDo   ubuntu      20 20.04   amd64          -  github adm_root :
 ToDo   ubuntu      22 22.04   amd64          -  github adm_root :
 ToDo   macos       11 11      amd64          -  github adm_root :
@@ -3600,6 +3642,8 @@ ToDo   macos       12 12      amd64          -  github adm_root :
 ToDo   windows   2019 2019    amd64          -  github adm_root :
 ToDo   windows   2022 2022    amd64          -  github adm_root :
 "
+
+#all_SVR_attr_value_l_l+="$NL$todo_SVR_attr_value_l_l"
 
 # unknown/todo/check...
 unknown_SVR_attr_value_l_l="\
@@ -3615,51 +3659,85 @@ Do     fedora      39 39      x86_64         -  vbox  adm_root : +SR +NEI -NCD .
 Do     fedora      38 38      x86_64         -  vbox  adm_root : +SR +NEI -NCD .AR
 "
 
+#all_SVR_attr_value_l_l+="$depr_SVR_attr_value_l_l"
+
+
+get_self_hosted(){
+    hosts="$(awk '/!SELF-HOSTED!/{
+        if($0 !~ "^  *#")SH=SH"/"$(NF-2)
+    }
+    END{
+        print SH"/"
+    }' .github/workflows/autopkg_action.yml)"
+    
+    while read SVR_ATTR_L; do
+        read $SVR_attr_name_l <<< $SVR_ATTR_L
+        this_host="$SVR_OS$SVR_Vv-$SVR_mach"
+        if [[ "$hosts" =~ "/$this_host/" ]]; then
+            echo $SVR_ATTR_L
+        fi
+    done <<< "$all_SVR_attr_value_l_l"
+
+}
+
 CRR_REPO_LIST=""
 CRR_REPO_LIST+="NevilleDNZ-downstream/repo_autopkg-downstream "
 CRR_REPO_LIST+="NevilleDNZ/repo_autopkg "
 
 if [ "$#" == "0" ]; then
-    #set -- build_SVRs
-    #set -- build_SVRs prep_runners
-    #set -- prep_runners
-    set -- start_runners
+    argv=""
+    #argv+=" build_SVRs"
+    argv+=" self_hosted"
+    argv+=" add_SVRs"
+    argv+=" add_runners"
+    argv+=" start_runners"
+
+    #argv="status_runners"
+
+    #argv="remove_runners"
+    set -- $argv
 fi
 
-get_self_hosted(){
-    awk '/!SELF-HOSTED!/{
-        if($0 !~ "^  *#") print $(NF-2)
-    }' .github/workflows/autopkg_action.yml
-}
-
-# eg. rhel9.4-x86_64 rocky9.4-aarch64 debian11-aarch64 raspbian12-armv7l fedora38-x86_64 fedora39-x86_64 fedora40-x86_64
-SELF_HOSTED_l="`get_self_hosted`"
+echo_Q JOB: "$0" "$@"
 
 for action in "$@"; do
-    case "$1" in
+    case "$action" in
+        (help|--help)
+            echo USAGE:
+            echo "  $0 build_SVRs"
+            echo "  $0 add_SVRs"
+            echo "  $0 add_runners"
+            echo "  $0 start_runners"
+            echo "  $0 add_runners start_runners"
+            echo "  $0 status_runners"
+            echo "  $0 remove_runners"
+        ;;
+        (self_hosted)
+            # echo "$all_SVR_attr_value_l_l:$NL$all_SVR_attr_value_l_l"
+# eg. rhel9.4-x86_64 rocky9.4-aarch64 debian11-aarch64 raspbian12-armv7l fedora38-x86_64 fedora39-x86_64 fedora40-x86_64
+            SVR_attr_value_l_l="`get_self_hosted`"
+            echo SVR_attr_value_l_l:"$NL$SVR_attr_value_l_l"
+        ;;
         (build_SVRs)
             build_custom_ISOs_and_SVRs
-            for_SVRs_run true shutdown_SVR # installation phase 1
+            for_SVRs_srun true shutdown_SVR # installation phase 1
             snapshot_VBoxs # each SVR is stopped, & DVD ejected for snapshot
         ;;
-        (prep_runners)
-            for_SVRs_run AR_prep_SVR
-            for_SVRs_run AR_configure_runners_repo_at_SVR
+        (add_SVRs)
+            for_SVRs_srun AR_prep_SVR
+        ;;
+        (add_runners)
+            for_SVRs_srun AR_configure_runners_repo_at_SVR
         ;;
         (start_runners)
-            for_SVRs_run AR_run_runners_repo_at_SVR AR_status_runners_repo_at_SVR
+            for_SVRs_srun AR_run_runners_repo_at_SVR
         ;;
-        (cleanup_runners)
-            for_SVRs_run AR_kill_runners_repo_at_SVR
-            for_SVRs_run shutdown_SVR # use shutdown_SVR when you cannot run all SVRs at once.
+        (status_runners)
+            for_SVRs_srun AR_status_runners_repo_at_SVR
         ;;
-        (depr_all)
-            for_SVRs_run AR_prep_SVR
-            for_SVRs_run AR_configure_runners_repo_at_SVR
-            for_SVRs_run AR_run_runners_repo_at_SVR
-            for_SVRs_run AR_kill_runners_repo_at_SVR
-            for_SVRs_run AR_remove_runners_repo_at_SVR
-            for_SVRs_run shutdown_SVR # assumes vms need to be started first
+        (remove_runners)
+            for_SVRs_srun AR_kill_runners_repo_at_SVR AR_remove_runners_repo_at_SVR
+            for_SVRs_srun shutdown_SVR # use shutdown_SVR when you cannot run all SVRs at once.
         ;;
         (*)echo Huh? "$0 $@";;
     esac
