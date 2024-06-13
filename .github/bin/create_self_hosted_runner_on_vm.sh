@@ -2986,6 +2986,8 @@ AR_prep_SVR (){
 
 # Note: on ubuntu, the default login shell is /bin/sh, not bash.
     # $SVR_via "whoami; id -a; uname -a; logname"
+    ALLOW_SUDO="$CRR_remote_builder ALL=(ALL:ALL) NOPASSWD: ALL"
+
     $SVR_via "id -a; uname -a; id -a; set -x
         dnf install -y tar # ToDo Needed for RHEL-minimum
 #        useradd -Um -u $CRR_UID -G adm,wheel -c '$CRR_remote_builder',r,w,m,e '$CRR_remote_builder'
@@ -2996,9 +2998,9 @@ AR_prep_SVR (){
         chmod -R go-rwx ~$CRR_remote_builder/.ssh
         chown -R $CRR_remote_builder ~$CRR_remote_builder/.ssh
         echo '`cat $authorized_keys`' >> ~$CRR_remote_builder/.ssh/authorized_keys
-        ALLOW_SUDO='$CRR_remote_builder ALL=(ALL:ALL) NOPASSWD: ALL'
-        grep -q $qq\$ALLOW_SUDO$qq '/etc/sudoers.d/$CRR_remote_builder' ||
-            echo $qq\$ALLOW_SUDO$qq >> '/etc/sudoers.d/$CRR_remote_builder'
+        ALLOW_SUDO='$ALLOW_SUDO'
+        grep -q $q$ALLOW_SUDO$q '/etc/sudoers.d/$CRR_remote_builder' ||
+            echo $q$ALLOW_SUDO$q >> '/etc/sudoers.d/$CRR_remote_builder'
         chmod go-rwx '/etc/sudoers.d/$CRR_remote_builder'
       "
 
@@ -3607,7 +3609,7 @@ Do     debian      11 11      aarch64 pi4b14-deb11-aarch64-2g         bare adm_o
 all_SVR_attr_value_l_l="$SVR_attr_value_l_l"
 
 parked_SVR_attr_value_l_l="\
-Doing  raspbian    11 11      armv6l  192.168.0.73         bare adm_owner : etc. [o] pi1b2-deb11-armv6l-512m
+Doing  raspbian    11 11      armv6l  192.168.0.73    bare adm_owner : etc. [o] pi1b2-deb11-armv6l-512m
 Doing  raspbian    10 10      armv6l  192.168.0.72    bare adm_pi : etc. [p] pi1b1-raspbian10-armv6l-256m
 
 Spare  rocky        9  9.4    aarch64 192.168.0.48                    bare adm_rocky : etc. [nor] pi4b14-rocky9-4-aarch64-4g/192.168.0.48
@@ -3664,7 +3666,10 @@ Do     fedora      38 38      x86_64         -  vbox  adm_root : +SR +NEI -NCD .
 
 get_self_hosted(){
     hosts="$(awk '/!SELF-HOSTED!/{
-        if($0 !~ "^  *#")SH=SH"/"$(NF-2)
+        if($0 !~ "^  *#"){
+            sub("^[-# ]*",""); sub("[# ].*$","");
+            SH=SH"/"$1
+        }
     }
     END{
         print SH"/"
