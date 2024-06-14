@@ -271,8 +271,8 @@ case "$cmd" in
         get_SHR_REPO_NAME "$1"
         get_SHR_RUNNER_NAME "$2"
         ps -eaf | 
-            grep ".*/$SHR_RUNNERS/$SHR_REPO_NAME/$SHR_RUNNER_NAME[/]" | # bin/Runner.Listener run\$" | 
-                awk '{print $2}' | xargs kill -KILL 
+            grep ".*/$SHR_RUNNERS[/]$SHR_REPO_NAME[/]$SHR_RUNNER_NAME[/]" | # bin/Runner.Listener run\$" | 
+                awk '{print $2}' | xargs -r kill -KILL 
     ;;
     (remove) # cmd
         get_SHR_REPO_NAME "$1"

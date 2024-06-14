@@ -197,7 +197,7 @@ jobs:
           #- opensuse-leap15.5-x86_64 # sudo zypper --non-interactive install package_name is a problem
           #- raspbian10-armv6l # !SELF-HOSTED! = 256mb
           #- raspbian11-armv6l # !SELF-HOSTED! = 512mb
-          #- raspbian12-armv7l # !SELF-HOSTED! = 1gb
+          - raspbian12-armv7l # !SELF-HOSTED! = 1gb
           - debian11-aarch64  # !SELF-HOSTED! = 2gb
           - rocky9.4-aarch64  # !SELF-HOSTED! = 8gb
 #        matrix_os_vm:

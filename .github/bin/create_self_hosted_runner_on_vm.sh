@@ -2952,6 +2952,11 @@ adm_root(){
     ASSERT ssh $OPT_ssh "root@$CRR_IP" "$@"
 }
 
+echo_builder_login(){
+    echo_Q "===" $SVR_NAME: ssh  $OPT_ssh "$CRR_remote_builder@$CRR_IP" "$@"
+    echo
+}
+
 ssh_builder(){
     ASSERT ssh  $OPT_ssh "$CRR_remote_builder@$CRR_IP" "$@"
 }
@@ -2998,6 +3003,7 @@ AR_prep_SVR (){
         chmod -R go-rwx ~$CRR_remote_builder/.ssh
         chown -R $CRR_remote_builder ~$CRR_remote_builder/.ssh
         echo '`cat $authorized_keys`' >> ~$CRR_remote_builder/.ssh/authorized_keys
+        sort -u -o ~$CRR_remote_builder/.ssh/authorized_keys ~$CRR_remote_builder/.ssh/authorized_keys
         ALLOW_SUDO='$ALLOW_SUDO'
         grep -q $q$ALLOW_SUDO$q '/etc/sudoers.d/$CRR_remote_builder' ||
             echo $q$ALLOW_SUDO$q >> '/etc/sudoers.d/$CRR_remote_builder'
@@ -3038,9 +3044,9 @@ AR_configure_runners_repo_at_SVR (){
         else
             token="$in_token"
         fi
-        NOTE To manually get a fresh actions/runners token
-        NOTE firefox "$CRR_REPO_URL/$repo/settings/actions/runners/new"
-        NOTE cd $CRR_AR_DIR "&&" ./runner_mgr.sh configure "$repo" "$SVR_NAME" $token
+        #NOTE To manually get a fresh actions/runners token
+        #NOTE firefox "$CRR_REPO_URL/$repo/settings/actions/runners/new"
+        #NOTE cd $CRR_AR_DIR "&&" ./runner_mgr.sh configure "$repo" "$SVR_NAME" $token
 
         ssh_builder "
             mkdir -p $CRR_AR_DIR && cd $CRR_AR_DIR &&
@@ -3085,6 +3091,17 @@ AR_kill_runners_repo_at_SVR (){
     done
 }
 
+HELP_echo_builder_login_at_SVR="$TODO"
+echo_builder_login_at_SVR (){
+    SVR_NAME="$1"
+    CRR_IP="$2"
+    repo="$3"
+
+    #for repo in $CRR_REPO_LIST; do
+        echo_builder_login 
+    #done
+}
+
 HELP_AR_status_runners_repo_at_SVR="$TODO"
 AR_status_runners_repo_at_SVR (){
     SVR_NAME="$1"
@@ -3107,8 +3124,6 @@ AR_remove_runners_repo_at_SVR (){
     repo="$3"
     token="$4"
     for repo in $CRR_REPO_LIST; do
-        echo ./runner_mgr.sh remove "$repo" "$SVR_NAME"
-
         ssh_builder "
             cd $CRR_AR_DIR &&
             ./runner_mgr.sh remove '$repo' '$SVR_NAME' $token
@@ -3549,7 +3564,10 @@ snapshot_VBoxs(){
 }
 
 for_SVRs_srun(){
-    while read SVR_attr_value_l; do
+    echo "SVR_attr_value_l_l:$NL$SVR_attr_value_l_l"
+
+    IFS="$NL" readarray -t SVR_attr_value_l_a <<< "${SVR_attr_value_l_l}"
+    for SVR_attr_value_l in "${SVR_attr_value_l_a[@]}"; do
         read $SVR_attr_name_l <<< "$SVR_attr_value_l"
         setenv_target_SVR
 
@@ -3560,7 +3578,7 @@ for_SVRs_srun(){
 
         #WAIT_UNTIL is_VBox_started "$CRR_hostname" "$CRR_VBOX_NIC_NUM" && {
         WAIT_UNTIL is_SVR_started "$CRR_hostname" && {
-            echo_Q started: "$CRR_hostname" "$CRR_VBOX_NIC_NUM" cmd_l="$@"
+            echo_Q is_started: "$CRR_hostname" "$CRR_VBOX_NIC_NUM" cmd_l="$@"
             for cmd in "$@"; do
                 [ "$cmd" = "shutdown_SVR" ] && break
                 # ssh $OPT_ssh root@$SVR_addr
@@ -3579,7 +3597,8 @@ for_SVRs_srun(){
             esac
         fi
         # destroy_SVR
-    done  <<< "$SVR_attr_value_l_l"
+        true
+    done # <<< "$SVR_attr_value_l_l"
     true
 }
 
@@ -3599,16 +3618,16 @@ SVR_ty_l="vbox bare github .qemu .kvm .vmware .docker .xen .aws"
 SVR_attr_name_l="\
 SVR_St SVR_OS SVR_ver SVR_Vv SVR_mach  SVR_addr SVR_ty  SVR_via colon SVR_Etc"
 SVR_attr_value_l_l="\"
-Do     fedora      40 40      x86_64  -                          vbox adm_root  : +SR +NEI -NCD .AR
 Do     rhel         9  9.4    x86_64  localhost                  bare adm_root  : +SR -NEI .NCD .AR
 Do     rocky        9  9.4    aarch64 pi4b14-rocky9-4-aarch64-8g bare adm_rocky : etc. [r] pi4b14-rocky9-4-aarch64-8g/172.31.0.27
 Do     debian      11 11      aarch64 pi4b14-deb11-aarch64-2g    bare adm_owner : etc. [no]
+Do     fedora      40 40      x86_64  -                          vbox adm_root  : +SR +NEI -NCD .AR
+Do     raspbian    12 12      armv7l  pi2b11-deb12-armv7l-1g     bare adm_owner : etc. [o] 172.31.1.36
 "
 
 all_SVR_attr_value_l_l="$SVR_attr_value_l_l"
 
 parked_SVR_attr_value_l_l="\
-Do     raspbian    12 12      armv7l  pi2b11-deb12-armv7l-1g     bare adm_owner : etc. [o] 172.31.1.36
 
 Doing  raspbian    11 11      armv6l  192.168.0.73    bare adm_owner : etc. [o] pi1b2-deb11-armv6l-512m
 Doing  raspbian    10 10      armv6l  192.168.0.72    bare adm_pi : etc. [p] pi1b1-raspbian10-armv6l-256m
@@ -3700,23 +3719,23 @@ if [ "$#" == "0" ]; then
 
     #argv="status_runners"
 
-    #argv="remove_runners"
+    #argv=" self_hosted remove_runners"
     set -- $argv
 fi
 
-echo_Q JOB: "$0" "$@"
+echo_Q JOB: "$(basename "$0")" "$@"
 
 for action in "$@"; do
     case "$action" in
         (help|--help)
             echo USAGE:
-            echo "  $0 build_SVRs"
-            echo "  $0 add_SVRs"
-            echo "  $0 add_runners"
-            echo "  $0 start_runners"
-            echo "  $0 add_runners start_runners"
-            echo "  $0 status_runners"
-            echo "  $0 remove_runners"
+            echo "  $0 self_hosted build_SVRs"
+            echo "  $0 self_hosted add_SVRs"
+            echo "  $0 self_hosted add_runners"
+            echo "  $0 self_hosted start_runners"
+            echo "  $0 self_hosted add_runners start_runners"
+            echo "  $0 self_hosted status_runners"
+            echo "  $0 self_hosted remove_runners"
         ;;
         (self_hosted)
             # echo "$all_SVR_attr_value_l_l:$NL$all_SVR_attr_value_l_l"
@@ -3740,6 +3759,9 @@ for action in "$@"; do
         ;;
         (status_runners)
             for_SVRs_srun AR_status_runners_repo_at_SVR
+        ;;
+        (list_builder_login)
+            for_SVRs_srun echo_builder_login_at_SVR 
         ;;
         (remove_runners)
             for_SVRs_srun AR_kill_runners_repo_at_SVR AR_remove_runners_repo_at_SVR
