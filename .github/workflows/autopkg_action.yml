@@ -28,8 +28,8 @@ on:
       WFDP_RELEASE_NAME: {required: true, type: string}
       WFDP_AUTOTOOL_CONFIGURE: {required: true, type: string}
 
-# permissions: # ensure that the workflow has the necessary permissions to create releases
-#  contents: write
+permissions: # ensure that the workflow has the necessary permissions to create releases
+  contents: write
 
 #env:
 #  NJOBS_WORKFLOW_LEVEL_VAR: 'This is a workflow-level variable'
