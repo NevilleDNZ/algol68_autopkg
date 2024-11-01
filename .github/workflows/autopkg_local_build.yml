@@ -67,9 +67,7 @@ on:
             WFDP_RELEASE_NAME:
                 description: 'Release to build'
                 required: true
-#                default: '5.3.0'
-#          redo default: '3.5.6'
-                default: '3.5.6'
+                default: '3.5.6' # MAJOR.minor.patch
                 type: choice
                 options:
                     - '6.2.9'
@@ -151,7 +149,7 @@ on:
                     - '3.5.3'
                     - '3.5.4'
                     - '3.5.5'
-                    - '3.5.6'
+                    - '3.5.6' # MAJOR.minor.patch
                     - '3.5.7'
                     - '3.5.8'
                     - '3.5.9'
