@@ -97,7 +97,7 @@ jobs:
           output CRJ_BUILD
 
           # ToDo: get most recent release tag on trunk!
-          output CRJ_RELEASE_NAME := "${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.6' }}" # MAJOR.minor.patch
+          output CRJ_RELEASE_NAME := "${{ github.event.inputs.WFDP_RELEASE_NAME   || '3.5.7' }}" # MAJOR.minor.patch
           output CRJ_PACKAGE_VERSION := "$(sed "s/-beta/~beta/g" <<<"$CRJ_RELEASE_NAME")" # 
 
           output CRJ_USER_UPSTREAM := "${{ github.event.inputs.WFDP_USER_UPSTREAM || 'NevilleDNZ' }}"
